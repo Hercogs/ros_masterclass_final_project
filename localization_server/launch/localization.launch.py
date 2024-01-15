@@ -33,7 +33,7 @@ def generate_launch_description():
             name='amcl',
             output='screen',
             parameters=[nav2_yaml,
-                        {'use_sim_time': True}, ]
+                        {'use_sim_time': True}]
         ),        
         
         Node(
@@ -41,7 +41,7 @@ def generate_launch_description():
             executable="rviz2",
             output="screen",
             parameters=[{
-                "use_sim_time": True,
+                "use_sim_time": True
             }],
             arguments=[
                 "-d", rviz_config_dir
