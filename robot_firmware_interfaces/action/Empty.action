@@ -1,0 +1,6 @@
+#int32 order
+---
+bool result
+string msg
+---
+#int32[] partial_sequence
