@@ -5,48 +5,56 @@ from rclpy.action import ActionServer
 from rclpy.node import Node
 
 from robot_firmware_interfaces.action import Empty  # import the action message
+from geometry_msgs.msg import PoseStamped
+
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+
+# ros2 run robot_firmware main_node --ros-args -p use_sim_time:=true
+
+# Shelf positions for picking
+trash_table_position = {
+    # [x, y, theta - angle to rotate when robot is under table]
+    "table_1": [-0.25, 1.10, 0.0, -1.57],
+}
 
 
-class SimpleActionServer(Node):
+class MainNode(Node):
 
     def __init__(self):
         super().__init__('main_node')
-        self._action_server = ActionServer(
-            self,
-            Empty,
-            'remove_trash_table',
-            self.execute_callback)
 
-    def execute_callback(self, goal_handle):
-        self.get_logger().info('Executing goal...')
+        self.navigator = BasicNavigator()
+        self.state = ""
 
-        # Perform the desired action here
-        # ...
+        self.get_logger().info('Waiting for navigattion to start...')
+        self.navigator.waitUntilNav2Active()
 
-        # Check if the action has been canceled
-        if goal_handle.is_cancel_requested:
-            goal_handle.canceled()
-            self.get_logger().info('Goal canceled')
-            return
+        self.get_logger().info('Initializing robot pose...')
+        self.set_initial_position()
 
-        # Check if the action has been preempted
-        # if goal_handle.is_preempt_requested:
-        #     goal_handle.abort()
-        #     self.get_logger().info('Goal preempted')
-        #     return
+        self.get_logger().info('Main node started')
+        self.create_rate(1.0).sleep()  # Sleep for 1 sec
+    
 
-        # Set the result of the action
-        result = Empty.Result()
-        result.result = True
-        
-        goal_handle.succeed()
-        return result
+    def set_initial_position(self):
+        # Set your demo's initial pose
+        initial_pose = PoseStamped()
+        initial_pose.header.frame_id = 'map'
+        initial_pose.header.stamp = self.get_clock().now().to_msg()
+        initial_pose.pose.position.x = 0.0
+        initial_pose.pose.position.y = 0.0
+        initial_pose.pose.orientation.x = 0.0
+        initial_pose.pose.orientation.y = 0.0
+        initial_pose.pose.orientation.z = 0.0
+        initial_pose.pose.orientation.w = 1.0
 
-        self.get_logger().info('Goal completed')
+        self.navigator.setInitialPose(initial_pose)
+
+
 
 def main(args=None):
     rclpy.init(args=args)
-    simple_action_server = SimpleActionServer()
+    simple_action_server = MainNode()
     rclpy.spin(simple_action_server)
     rclpy.shutdown()
 
