@@ -22,26 +22,7 @@ def generate_launch_description():
 
 
 
-    return LaunchDescription([
-        # Node(
-        #     package='nav2_map_server',
-        #     executable='map_server',
-        #     name='map_server',
-        #     output='screen',
-        #     parameters=[{'use_sim_time': True}, 
-        #                 {"topic_name": "map"},
-        #                 {"frame_id": "map"},
-        #                 {'yaml_filename': map_file}]
-        # ),
-            
-        Node(
-            package='nav2_amcl',
-            executable='amcl',
-            name='amcl',
-            output='screen',
-            parameters=[nav2_yaml,
-                        {'use_sim_time': True}]
-        ),        
+    return LaunchDescription([   
         
 
         Node(
@@ -68,7 +49,11 @@ def generate_launch_description():
             executable='behavior_server',
             name='behavior_server',
             parameters=[behavior_server_yaml],
-            output='screen'),
+            output='screen',
+            remappings={
+                ('/cmd_vel', '/diffbot_base_controller/cmd_vel_unstamped')
+            },
+        ),
 
         Node(
             package='nav2_bt_navigator',
@@ -84,12 +69,12 @@ def generate_launch_description():
             output='screen',
             parameters=[{'autostart': True},
                         {'node_names': [
-                                        #'map_server',
-                                        'amcl',
                                         'planner_server',
                                         'controller_server',
                                         'behavior_server',
-                                        'bt_navigator']}]
+                                        'bt_navigator']
+                        }
+                        ]
         ),
 
         Node(
