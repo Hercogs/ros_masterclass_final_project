@@ -1,0 +1,6 @@
+bool dummy_aproach  # If true, then only check table existence (for simulation)
+---
+int32 result  # 0 - success, 1 - table not found, 2 - failed approach
+string msg
+---
+string state
