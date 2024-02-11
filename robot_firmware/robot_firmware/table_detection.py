@@ -15,7 +15,9 @@ from robot_firmware_interfaces.action import AproachTable  # import the action m
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
-# ros2 run robot_firmware table_detection --ros-args -p use_sim_time:=true
+#  colcon build --packages-select robot_firmware --symlink-install
+
+# ros2 run robot_firmware table_detection
 
 # ros2 action send_goal /aproach_table robot_firmware_interfaces/action/AproachTable "dummy_aproach: true"
 
@@ -53,7 +55,7 @@ class TableDetectionNode(Node):
 
 
 
-        self.publish_table_tf = False  # defult False
+        self.publish_table_tf = True  # defult False
         self.is_table = False
     
 
@@ -101,10 +103,11 @@ class TableDetectionNode(Node):
 
             if abs(angle) > 0.20: # 13 degree
                 msg.linear.x = 0.0
-                msg.angular.z = 0.20 * angle / abs(angle)
+                msg.angular.z = 0.25 * angle / abs(angle)
             else:
                 msg.linear.x = scale_forward_speed
-                msg.angular.z = scale_rotation * angle / abs(angle)
+                sign = angle / abs(angle)
+                msg.angular.z = sign * scale_rotation * abs(angle)
 
             self.speed_pub.publish(msg)
 
@@ -191,7 +194,8 @@ class TableDetectionNode(Node):
                 msg.angular.z = 0.20 * angle / abs(angle)
             else:
                 msg.linear.x = scale_forward_speed
-                msg.angular.z = scale_rotation * angle / abs(angle)
+                sign = angle / abs(angle)
+                msg.angular.z = sign * scale_rotation * abs(angle)
 
             self.speed_pub.publish(msg)
 
