@@ -84,7 +84,7 @@ class TableDetectionNode(Node):
         target_frame = 'robot_base_link'
         ref_frame = 'pre_table_frame'
         scale_forward_speed = 0.15
-        scale_rotation = 0.30
+        scale_rotation = 1.30
 
         distance = 99.0
         # angle = 0.0
@@ -101,10 +101,11 @@ class TableDetectionNode(Node):
 
             if abs(angle) > 0.20: # 13 degree
                 msg.linear.x = 0.0
-                msg.angular.z = 0.20 * angle / abs(angle)
+                msg.angular.z = 0.25 * angle / abs(angle)
             else:
                 msg.linear.x = scale_forward_speed
-                msg.angular.z = scale_rotation * angle / abs(angle)
+                sign = angle / abs(angle)
+                msg.angular.z = sign * scale_rotation * abs(angle)
 
             self.speed_pub.publish(msg)
 
