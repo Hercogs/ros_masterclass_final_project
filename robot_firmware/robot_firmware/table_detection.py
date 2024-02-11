@@ -25,7 +25,7 @@ class TableDetectionNode(Node):
         super().__init__('table_detection_node')
         self.laser_scan_subscription = self.create_subscription(
             LaserScan,
-            'scan',
+            '/turtlebot_5/scan',
             self.scan_callback,
             3
         )
@@ -33,7 +33,7 @@ class TableDetectionNode(Node):
         self.br = tf2_ros.TransformBroadcaster(self)
 
         # Create Twist publisher
-        self.speed_pub = self.create_publisher(Twist, 'diffbot_base_controller/cmd_vel_unstamped', 3)
+        self.speed_pub = self.create_publisher(Twist, '/turtlebot_5/cmd_vel', 3)
 
         # Create tf2 listener
         self.tf_buffer = tf2_ros.Buffer()
@@ -81,7 +81,7 @@ class TableDetectionNode(Node):
             return result
 
         # try to reach pre_table_link
-        target_frame = 'robot_base_link'
+        target_frame = 'turtlebot_5_base_link'
         ref_frame = 'pre_table_frame'
         scale_forward_speed = 0.15
         scale_rotation = 0.30
@@ -122,7 +122,7 @@ class TableDetectionNode(Node):
         #distance = 99.0
         angle = 99.0
 
-        target_frame = 'robot_base_link'
+        target_frame = 'turtlebot_5_base_link'
         ref_frame = 'back_table_frame'
 
         msg = Twist()
@@ -170,11 +170,11 @@ class TableDetectionNode(Node):
         distance = 99.0
         #angle = 99.0
 
-        target_frame = 'robot_base_link'
+        target_frame = 'turtlebot_5_base_link'
         ref_frame = 'back_table_frame'
 
         msg = Twist()
-        while(distance > 0.4):
+        while(distance > 0.25):
         # Stop publish whgen uder, so no mistkaes
             if distance < 0.8:
                 self.publish_table_tf = False
@@ -224,8 +224,8 @@ class TableDetectionNode(Node):
         frame_name = [f"leg_{i}" for i in range(4)]
 
         # Get first leg pos
-        x1, y1 = self.read_tf(target_frame="odom", ref_frame="leg_0") #map
-        x2, y2 = self.read_tf(target_frame="odom", ref_frame="leg_1") #map
+        x1, y1 = self.read_tf(target_frame="turtlebot_5_odom", ref_frame="leg_0") #map
+        x2, y2 = self.read_tf(target_frame="turtlebot_5_odom", ref_frame="leg_1") #map
 
         if x1 == None or x2 == None:
             return
@@ -240,11 +240,11 @@ class TableDetectionNode(Node):
         x_mid = (x1 + x2)/2
         y_mid = (y1 + y2)/2
         slope = math.atan2(dy, dx)
-        self.publish_tf(x_mid, y_mid, theta=slope, parent_frame = "odom", frame_name="front_table_frame") #map
+        self.publish_tf(x_mid, y_mid, theta=slope, parent_frame = "turtlebot_5_odom", frame_name="front_table_frame") #map
 
         # Get second leg pos
-        x1, y1 = self.read_tf(target_frame="odom", ref_frame="leg_2") #map
-        x2, y2 = self.read_tf(target_frame="odom", ref_frame="leg_3") #map
+        x1, y1 = self.read_tf(target_frame="turtlebot_5_odom", ref_frame="leg_2") #map
+        x2, y2 = self.read_tf(target_frame="turtlebot_5_odom", ref_frame="leg_3") #map
 
         if x1 == None or x2 == None:
             return -1
@@ -259,10 +259,10 @@ class TableDetectionNode(Node):
         x_mid = (x1 + x2)/2
         y_mid = (y1 + y2)/2
         slope = math.atan2(dy, dx)
-        self.publish_tf(x_mid, y_mid, theta=slope, parent_frame = "odom", frame_name="back_table_frame") #map
+        self.publish_tf(x_mid, y_mid, theta=slope, parent_frame = "turtlebot_5_odom", frame_name="back_table_frame") #map
 
         # Publish pre table frame
-        x1, y1 = self.read_tf(target_frame="front_table_frame", ref_frame="robot_base_link")
+        x1, y1 = self.read_tf(target_frame="front_table_frame", ref_frame="turtlebot_5_base_link")
         if x1 == None:
             return
         # Publish extra frame for robot before going under the table
@@ -283,26 +283,26 @@ class TableDetectionNode(Node):
         ranges = msg.ranges
 
         # Define the minimum and maximum distances for table legs
-        min_range = 0.1  # Minimum range value for table detection
-        max_range = 2.5  # Maximum range value for table detection
+        min_range = 0.2  # Minimum range value for table detection
+        max_range = 1.0  # Maximum range value for table detection
 
-        max_two_point_dist = 0.07  # Maximum distance between 2 laser reading to be in 1 group
-        min_group_size = 4
+        max_two_point_dist = 0.05  # Maximum distance between 2 laser reading to be in 1 group
+        min_group_size = 5
 
-        table_leg_size = 0.22
+        table_leg_size = 0.1
 
-        table_x_size = 0.66
-        table_y_size = 0.75
+        table_x_size = 0.5
+        table_y_size = 0.5
         table_diagnol = math.sqrt(table_x_size**2 + table_y_size**2)
-        table_size_tolerance = 0.1
+        table_size_tolerance = 0.05
 
         #group = []
         prev_range = msg.ranges[0]
         scans_too_big = 0
 
                 # Filter parameters
-        min_distance = 0.1  # Minimum distance to keep
-        max_distance = 2.5  # Maximum distance to keep
+        min_distance = 0.2  # Minimum distance to keep
+        max_distance = 2.0  # Maximum distance to keep
 
         # Create a new LaserScan message for filtered data
         filtered_msg = LaserScan()
@@ -358,6 +358,17 @@ class TableDetectionNode(Node):
                     delta_dist <= table_leg_size:
                 filtered_groups.append(group)
         
+        for i, group in enumerate(filtered_groups):
+            pass
+            #self.get_logger().info(f'Group {i+1}: {len(group)}, start idx: {group[0][1]*180/3.14:.2f}, end idx: {group[-1][1]*180/3.14:.2f},dist: {mean(list(zip(*group))[0])}')
+
+            mean_dist = mean(list(zip(*group))[0])
+            mean_angle = mean(list(zip(*group))[1])
+
+            x = mean_dist * math.cos(mean_angle)
+            y = mean_dist* math.sin(mean_angle)
+
+            #self.publish_tf(x, y, frame_name=f"leg_{i}")
 
         table = False
         class TableLeg:
@@ -417,12 +428,12 @@ class TableDetectionNode(Node):
                 y_size = abs(d - table_y_size)
                 diagnol_size = abs(d - table_diagnol)
 
-                #print("Table errors:")
-                #print(x_size, y_size, diagnol_size)
+                # print("Table errors:")
+                # print(x_size, y_size, diagnol_size)
 
                 if x_size < table_size_tolerance and \
                         y_size < table_size_tolerance:
-                    if x_size < y_size and not leg_x:
+                    if  not leg_x: #x_size < y_size and
                         #print(f"leg_x 1: {x_size}")
                         leg_x = True
                         leg_idx.append(i)
@@ -506,7 +517,7 @@ class TableDetectionNode(Node):
 
 
     
-    def publish_tf(self, x, y, theta=0, parent_frame = "robot_front_laser_base_link", frame_name = "table_frame"):
+    def publish_tf(self, x, y, theta=0, parent_frame = "turtlebot_5_laser_link", frame_name = "table_frame"):
         # TF broadcaster
         transfor_msg = TransformStamped()
         # transfor_msg.header.stamp = self.get_clock().now().to_msg()
@@ -532,7 +543,7 @@ class TableDetectionNode(Node):
         self.br.sendTransform(transfor_msg)
 
 
-    def read_tf(self, target_frame, ref_frame, fixed_frame="odom"):
+    def read_tf(self, target_frame, ref_frame, fixed_frame="turtlebot_5_odom"):
         try:
             t = self.tf_buffer.lookup_transform_full(
                 target_frame=target_frame,
