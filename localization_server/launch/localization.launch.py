@@ -7,9 +7,10 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     package_name = "localization_server"
+    map_name = "real_map.yaml"
     
     nav2_yaml = os.path.join(get_package_share_directory(package_name), 'config', 'amcl_config.yaml')
-    map_file = os.path.join(get_package_share_directory('cartographer_slam'), 'maps', 'sim_map.yaml')
+    map_file = os.path.join(get_package_share_directory('cartographer_slam'), 'maps', map_name)
 
     # RVIZ configuration file
     rviz_file = "localization.rviz"
@@ -21,7 +22,7 @@ def generate_launch_description():
             executable='map_server',
             name='map_server',
             output='screen',
-            parameters=[{'use_sim_time': True}, 
+            parameters=[{'use_sim_time': False}, 
                         {"topic_name": "map"},
                         {"frame_id": "map"},
                         {'yaml_filename': map_file}]
@@ -33,7 +34,10 @@ def generate_launch_description():
             name='amcl',
             output='screen',
             parameters=[nav2_yaml,
-                        {'use_sim_time': True}]
+                        {'use_sim_time': False}],
+            remappings=[
+                ('/odom', '/turtlebot_5/odom'),
+            ]
         ),        
         
         Node(
@@ -41,7 +45,7 @@ def generate_launch_description():
             executable="rviz2",
             output="screen",
             parameters=[{
-                "use_sim_time": True
+                "use_sim_time": False
             }],
             arguments=[
                 "-d", rviz_config_dir
@@ -53,7 +57,7 @@ def generate_launch_description():
             executable='lifecycle_manager',
             name='lifecycle_manager_localization',
             output='screen',
-            parameters=[{'use_sim_time': True},
+            parameters=[{'use_sim_time': False},
                         {'autostart': True},
                         {'node_names': ['map_server', 'amcl']}]
         )

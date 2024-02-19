@@ -38,27 +38,31 @@ Visualization Manager:
         All Enabled: true
         map:
           Value: true
-        odom:
+        turtlebot_5_base_footprint:
           Value: true
-        robot_base_docking_contact_link:
+        turtlebot_5_base_link:
           Value: true
-        robot_base_footprint:
+        turtlebot_5_caster_back_link:
           Value: true
-        robot_base_link:
+        turtlebot_5_caster_front_link:
           Value: true
-        robot_evelator_base_link:
+        turtlebot_5_cliff_sensor_front_link:
           Value: true
-        robot_front_cover_link:
+        turtlebot_5_cliff_sensor_left_link:
           Value: true
-        robot_front_laser_base_link:
+        turtlebot_5_cliff_sensor_right_link:
           Value: true
-        robot_omni_backwheel_link:
+        turtlebot_5_gyro_link:
           Value: true
-        robot_omni_front_leftwheel_link:
+        turtlebot_5_laser_link:
           Value: true
-        robot_omni_front_rightwheel_link:
+        turtlebot_5_odom:
           Value: true
-        robot_top_cover_link:
+        turtlebot_5_plate_bottom_link:
+          Value: true
+        turtlebot_5_plate_middle_link:
+          Value: true
+        turtlebot_5_plate_top_link:
           Value: true
       Marker Scale: 1
       Name: TF
@@ -67,25 +71,29 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
-          {}
-        odom:
-          robot_base_footprint:
-            robot_base_link:
-              robot_evelator_base_link:
-                {}
-              robot_front_cover_link:
-                robot_base_docking_contact_link:
+          turtlebot_5_odom:
+            turtlebot_5_base_footprint:
+              turtlebot_5_base_link:
+                turtlebot_5_caster_back_link:
                   {}
-              robot_front_laser_base_link:
-                {}
-              robot_omni_backwheel_link:
-                {}
-              robot_omni_front_leftwheel_link:
-                {}
-              robot_omni_front_rightwheel_link:
-                {}
-            robot_top_cover_link:
-              {}
+                turtlebot_5_caster_front_link:
+                  {}
+                turtlebot_5_cliff_sensor_front_link:
+                  {}
+                turtlebot_5_cliff_sensor_left_link:
+                  {}
+                turtlebot_5_cliff_sensor_right_link:
+                  {}
+                turtlebot_5_gyro_link:
+                  {}
+                turtlebot_5_laser_link:
+                  {}
+                turtlebot_5_plate_bottom_link:
+                  {}
+                turtlebot_5_plate_middle_link:
+                  {}
+                turtlebot_5_plate_top_link:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 0.5
@@ -142,14 +150,14 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 8000
+      Max Intensity: 47
       Min Color: 0; 0; 0
-      Min Intensity: 0
+      Min Intensity: 47
       Name: LaserScan
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.019999999552965164
       Style: Flat Squares
       Topic:
         Depth: 5
@@ -157,7 +165,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /scan
+        Value: /turtlebot_5/scan
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -258,16 +266,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 6.698418617248535
+      Distance: 9.945969581604004
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.3401199281215668
-        Y: -0.28087103366851807
-        Z: -0.3118506371974945
+        X: 2.638584613800049
+        Y: -0.9480360746383667
+        Z: 0.07701359689235687
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
