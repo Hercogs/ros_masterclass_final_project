@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /RobotModel1/Status1
+        - /Map1/Topic1
         - /RobotModel1/Description Topic1
       Splitter Ratio: 0.4347357153892517
     Tree Height: 544
@@ -26,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -55,27 +55,31 @@ Visualization Manager:
         All Enabled: true
         map:
           Value: true
-        odom:
+        turtlebot_5_base_footprint:
           Value: true
-        robot_base_docking_contact_link:
+        turtlebot_5_base_link:
           Value: true
-        robot_base_footprint:
+        turtlebot_5_caster_back_link:
           Value: true
-        robot_base_link:
+        turtlebot_5_caster_front_link:
           Value: true
-        robot_evelator_base_link:
+        turtlebot_5_cliff_sensor_front_link:
           Value: true
-        robot_front_cover_link:
+        turtlebot_5_cliff_sensor_left_link:
           Value: true
-        robot_front_laser_base_link:
+        turtlebot_5_cliff_sensor_right_link:
           Value: true
-        robot_omni_backwheel_link:
+        turtlebot_5_gyro_link:
           Value: true
-        robot_omni_front_leftwheel_link:
+        turtlebot_5_laser_link:
           Value: true
-        robot_omni_front_rightwheel_link:
+        turtlebot_5_odom:
           Value: true
-        robot_top_cover_link:
+        turtlebot_5_plate_bottom_link:
+          Value: true
+        turtlebot_5_plate_middle_link:
+          Value: true
+        turtlebot_5_plate_top_link:
           Value: true
       Marker Scale: 1
       Name: TF
@@ -84,25 +88,29 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
-          {}
-        odom:
-          robot_base_footprint:
-            robot_base_link:
-              robot_evelator_base_link:
-                {}
-              robot_front_cover_link:
-                robot_base_docking_contact_link:
+          turtlebot_5_odom:
+            turtlebot_5_base_footprint:
+              turtlebot_5_base_link:
+                turtlebot_5_caster_back_link:
                   {}
-              robot_front_laser_base_link:
-                {}
-              robot_omni_backwheel_link:
-                {}
-              robot_omni_front_leftwheel_link:
-                {}
-              robot_omni_front_rightwheel_link:
-                {}
-            robot_top_cover_link:
-              {}
+                turtlebot_5_caster_front_link:
+                  {}
+                turtlebot_5_cliff_sensor_front_link:
+                  {}
+                turtlebot_5_cliff_sensor_left_link:
+                  {}
+                turtlebot_5_cliff_sensor_right_link:
+                  {}
+                turtlebot_5_gyro_link:
+                  {}
+                turtlebot_5_laser_link:
+                  {}
+                turtlebot_5_plate_bottom_link:
+                  {}
+                turtlebot_5_plate_middle_link:
+                  {}
+                turtlebot_5_plate_top_link:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -147,7 +155,7 @@ Visualization Manager:
       Name: Map
       Topic:
         Depth: 5
-        Durability Policy: Volatile
+        Durability Policy: Transient Local
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
@@ -189,7 +197,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: odom
+    Fixed Frame: turtlebot_5_odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -232,16 +240,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 18.01711654663086
+      Distance: 9.508207321166992
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.3390121459960938
-        Y: -2.998721122741699
-        Z: 1.9214491844177246
+        X: 0.08969370275735855
+        Y: -0.6507024168968201
+        Z: 1.3408149480819702
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
