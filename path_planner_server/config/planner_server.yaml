@@ -1,7 +1,7 @@
 planner_server:
   ros__parameters:
     expected_planner_frequency: 20.0
-    use_sim_time: True
+    use_sim_time: False
     planner_plugins: ["GridBased"]
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
@@ -18,8 +18,8 @@ global_costmap:
       global_frame: map
       map_topic: /map
       #transform_tolerance: 0.5
-      robot_base_frame: robot_base_link
-      use_sim_time: True
+      robot_base_frame: turtlebot_5_base_link
+      use_sim_time: False
       robot_radius: 0.2
       #footprint: "[[0.2, 0.2], [-0.2, 0.2], [-0.2, -0.2], [0.2, -0.2]]"
       resolution: 0.05
@@ -36,7 +36,7 @@ global_costmap:
         mark_threshold: 0
         observation_sources: scan
         scan:
-          topic: /scan
+          topic: /turtlebot_5/scan
           #sensor_frame: vikings_bot_1/lidar_link
           max_obstacle_height: 2.0
           clearing: True

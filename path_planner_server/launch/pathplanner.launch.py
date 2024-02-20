@@ -8,7 +8,7 @@ def generate_launch_description():
     package_name = "path_planner_server"
 
     nav2_yaml = os.path.join(get_package_share_directory("localization_server"), 'config', 'amcl_config.yaml')
-    map_file = os.path.join(get_package_share_directory('cartographer_slam'), 'maps', 'sim_map.yaml')
+    map_file = os.path.join(get_package_share_directory('cartographer_slam'), 'maps', 'real_map.yaml')
 
     # RVIZ configuration file
     rviz_file = "path_planner.rviz"
@@ -23,16 +23,16 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        # Node(
-        #     package='nav2_map_server',
-        #     executable='map_server',
-        #     name='map_server',
-        #     output='screen',
-        #     parameters=[{'use_sim_time': True}, 
-        #                 {"topic_name": "map"},
-        #                 {"frame_id": "map"},
-        #                 {'yaml_filename': map_file}]
-        # ),
+        Node(
+            package='nav2_map_server',
+            executable='map_server',
+            name='map_server',
+            output='screen',
+            parameters=[{'use_sim_time': False}, 
+                        {"topic_name": "map"},
+                        {"frame_id": "map"},
+                        {'yaml_filename': map_file}]
+        ),
             
         Node(
             package='nav2_amcl',
@@ -40,7 +40,7 @@ def generate_launch_description():
             name='amcl',
             output='screen',
             parameters=[nav2_yaml,
-                        {'use_sim_time': True}]
+                        {'use_sim_time': False}]
         ),        
         
 
@@ -51,7 +51,7 @@ def generate_launch_description():
             output='screen',
             parameters=[controller_yaml],
             remappings={
-                ('/cmd_vel', '/diffbot_base_controller/cmd_vel_unstamped')
+                ('/cmd_vel', '/turtlebot_5/cmd_vel')
             },
         ),
 
@@ -68,7 +68,11 @@ def generate_launch_description():
             executable='behavior_server',
             name='behavior_server',
             parameters=[behavior_server_yaml],
-            output='screen'),
+            output='screen',
+            remappings={
+                ('/cmd_vel', '/turtlebot_5/cmd_vel')
+            },
+        ),
 
         Node(
             package='nav2_bt_navigator',
@@ -84,7 +88,7 @@ def generate_launch_description():
             output='screen',
             parameters=[{'autostart': True},
                         {'node_names': [
-                                        #'map_server',
+                                        'map_server',
                                         'amcl',
                                         'planner_server',
                                         'controller_server',
@@ -97,7 +101,7 @@ def generate_launch_description():
             executable="rviz2",
             output="screen",
             parameters=[{
-                "use_sim_time": True
+                "use_sim_time": False
             }],
             arguments=[
                 "-d", rviz_config_dir
