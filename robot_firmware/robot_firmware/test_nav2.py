@@ -11,15 +11,13 @@ from robot_firmware_interfaces.action import AproachTable  # import the action m
 from geometry_msgs.msg import PoseStamped
 from action_msgs.msg import GoalStatus
 
-from std_msgs.msg import Bool
-
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
 from tf_transformations  import quaternion_from_euler
 
-# ros2 run robot_firmware main_node --ros-args -p use_sim_time:=true
+# ros2 run robot_firmware test_nav2 --ros-args -p use_sim_time:=true
 
 # Home position
 home_position = {
@@ -32,6 +30,10 @@ trash_table_position = {
     # [x, y, theta - angle to rotate when robot is under table]
     "table_1": [-0.25, 1.20, 0.0, -1.57],
 }
+
+# osition(4.85357, -0.901903, 0), Orientation(0, 0, 0.0523186, 0.99863) = Angle: 0.104685
+# Position(0.375583, -0.514267, 0), Orientation(0, 0, -0.995858, 0.090919) =Angle: -2.9595
+# osition(-1.44846, -0.505206, 0), Orientation(0, 0, 0.688796, 0.724956) = Angle: 1.51965
 
 
 class MainNode(Node):
@@ -51,51 +53,48 @@ class MainNode(Node):
         # Create dummy timer
         self.timer = self.create_timer(1.0, self.timer_clb, callback_group=MutuallyExclusiveCallbackGroup())
         self.action_status = False
-    
-         # Create table subscriber
-        self.table_sub = self.create_subscription(Bool, '/table', self.table_sub_clb, 3)
-        self.is_table = False
 
         # self.get_logger().info('Initializing robot pose...')
         # self.set_initial_position()
-        
-        # Create table elevator pubishers
-
-
-        self.home_pos = (4.4, -1.2, 1.57)
-        self.target_points = [
-            (2.6, 0.4, 1.57*2),
-            (2.0, 0.4, 1.57*2),
-            (1.5, 0.4, 1.57*2),
-            (1.3, 0.0, 0.0),
-        ]
-        self.target_points.append(self.home_pos)
-
-        # TODO set table left point
 
         self.get_logger().info('Main node started')
-    
-
-    def table_sub_clb(self, msg):
-        self.is_table = msg.data
 
 
     def timer_clb(self):
         self.timer.cancel()
         self.action_status = False
+        table_loc = trash_table_position['table_1']
+
 
         # Step 1 - go to known location where table might be
+        pose = self.get_pose_stamped(3.5, 0.1, 0.0)
+        self.navigator.goToPose(pose)
 
-        for target_point in self.target_points:
-            result = self.go_to_pose(target_point[0], target_point[1], target_point[2], search_table=True)
-            if self.is_table:
-                break
-            if result != TaskResult.SUCCEEDED:
-                print(f"Going to point: FAILED {result}, but continue")
-        
-        if not self.is_table:
-            print("Couldnot find any table")
+        i = 0
+        while not self.navigator.isTaskComplete():
+            i += 1
+            feedback = self.navigator.getFeedback()
+            if feedback and i % 20 == 0:
+                print(
+                    'Estimated time of arrival at '
+                    + ' for worker: '
+                    + '{0:.0f}'.format(
+                        Duration.from_msg(feedback.estimated_time_remaining).nanoseconds
+                        / 1e9
+                    )
+                    + ' seconds.'
+                )
+                print("Moving")
+        result = self.navigator.getResult()   
+        if result != TaskResult.SUCCEEDED:
+            print(f"Step 7 - go to home position: FAILED {result}")
+            # TODO process failed task
             return
+        print("Step 1 - go to home positio: DONE")
+
+        return
+
+        print("Step 1 - go to known location where table might be: DONE")
 
 
         # Step 2 - trye to approach table
@@ -107,21 +106,21 @@ class MainNode(Node):
         
         # 0 - success, 1 - table not found, 2 - failed approach
         if result.result:
-            print(f"Action cliented returned: {result.result}, {result.msg}")
+            print(f"Action cliented returned: {result.result}")
             # TODO process failed task -  go home
             return
 
-        print(f"action server finished with robot uinder the table with result {result.result}")
+        print(f"action server finished with result {result.result}")
 
 
-        # Step 3 - Rotate robot
-        # result = self.rotate_robot(yaw=table_loc[3])
-        # if not result:
-        #     print(f"Step 3 - Rotate robot: FAILED")
-        #     # TODO process failed task
-        #     return
-        # self.create_rate(1/(5*abs(table_loc[3]))).sleep()
-        # print(f"Step 3 - Rotate robot: SUCCESS")
+         # Step 3 - Rotate robot
+        result = self.rotate_robot(yaw=table_loc[3])
+        if not result:
+            print(f"Step 3 - Rotate robot: FAILED")
+            # TODO process failed task
+            return
+        self.create_rate(1/(5*abs(table_loc[3]))).sleep()
+        print(f"Step 3 - Rotate robot: SUCCESS")
         
         # Step 4 - Lift elevator
         # Step 4.1 - Change footprint
@@ -138,17 +137,36 @@ class MainNode(Node):
 
 
         # Step 7 - Go to home position  
-        # home_loc = home_position['home_1']
-        # result = self.go_to_pose(home_loc[0], home_loc[1], home_loc[2])
-        # if result != TaskResult.SUCCEEDED:
-        #     print(f"Step 7 - go to home position: FAILED {result}")
-        #     # TODO process failed task
-        #     return
-        # print("Step 7 - go to home positio: DONE")
+        home_loc = home_position['home_1']
+        result = self.go_to_pose(home_loc[0], home_loc[1], home_loc[2])
+        if result != TaskResult.SUCCEEDED:
+            print(f"Step 7 - go to home position: FAILED {result}")
+            # TODO process failed task
+            return
+        print("Step 7 - go to home positio: DONE")
 
 
 
         
+
+
+    
+
+    def set_initial_position(self):
+        print("Set initial position")
+        # Set your demo's initial pose
+        initial_pose = PoseStamped()
+        initial_pose.header.frame_id = 'map'
+        initial_pose.header.stamp = self.get_clock().now().to_msg()
+        initial_pose.pose.position.x = 0.0
+        initial_pose.pose.position.y = 0.0
+        initial_pose.pose.orientation.x = 0.0
+        initial_pose.pose.orientation.y = 0.0
+        initial_pose.pose.orientation.z = 0.0
+        initial_pose.pose.orientation.w = 1.0
+
+        self.navigator.setInitialPose(initial_pose)
+    
     def get_pose_stamped(self,  x, y, yaw):
         pose = PoseStamped()
         pose.header.frame_id = 'map'
@@ -165,26 +183,21 @@ class MainNode(Node):
 
         return pose
 
-        def set_initial_position(self):
-            print("Set initial position")
-            # Set your demo's initial pose
-            initial_pose = PoseStamped()
-            initial_pose.header.frame_id = 'map'
-            initial_pose.header.stamp = self.get_clock().now().to_msg()
-            initial_pose.pose.position.x = 0.0
-            initial_pose.pose.position.y = 0.0
-            initial_pose.pose.orientation.x = 0.0
-            initial_pose.pose.orientation.y = 0.0
-            initial_pose.pose.orientation.z = 0.0
-            initial_pose.pose.orientation.w = 1.0
+    def go_to_pose(self, x, y, yaw):
+        shelf_item_pose = PoseStamped()
+        shelf_item_pose.header.frame_id = 'map'
+        shelf_item_pose.header.stamp = self.get_clock().now().to_msg()
+        shelf_item_pose.pose.position.x = x
+        shelf_item_pose.pose.position.y = y
 
-        self.navigator.setInitialPose(initial_pose)
-    
-    def go_to_pose(self, x, y, yaw, search_table=False):
-        pose = self.get_pose_stamped(x, y, yaw)
+        q = quaternion_from_euler(0, 0, yaw)
 
-        print(f'Received request for item picking at {pose.pose}.')
-        self.navigator.goToPose(pose)
+        shelf_item_pose.pose.orientation.x = q[0]
+        shelf_item_pose.pose.orientation.y = q[1]
+        shelf_item_pose.pose.orientation.z = q[2]
+        shelf_item_pose.pose.orientation.w = q[3]
+        print(f'Received request for item picking at {shelf_item_pose.pose}.')
+        self.navigator.goToPose(shelf_item_pose)
 
         # Do something during our route
         # (e.x. queue up future tasks or detect person for fine-tuned positioning)
@@ -193,10 +206,6 @@ class MainNode(Node):
         while not self.navigator.isTaskComplete():
             i += 1
             feedback = self.navigator.getFeedback()
-
-            if self.is_table:
-                self.navigator.cancelTask()
-
             if feedback and i % 20 == 0:
                 # print(
                 #     'Estimated time of arrival at '

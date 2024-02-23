@@ -8,6 +8,7 @@ from statistics import mean
 from geometry_msgs.msg import PoseStamped, TransformStamped, Twist
 from tf_transformations  import quaternion_from_euler
 import tf2_ros
+from std_msgs.msg import Bool
 
 from rclpy.action import ActionServer
 
@@ -36,6 +37,8 @@ class TableDetectionNode(Node):
 
         # Create Twist publisher
         self.speed_pub = self.create_publisher(Twist, '/turtlebot_5/cmd_vel', 3)
+         # Create table publisher
+        self.table_pub = self.create_publisher(Bool, '/table', 3)
 
         # Create tf2 listener
         self.tf_buffer = tf2_ros.Buffer()
@@ -279,7 +282,8 @@ class TableDetectionNode(Node):
 
 
     def scan_callback(self, msg):
-    
+        self.publish_table_tf = True
+
         if not self.publish_table_tf:
             self.is_table = False
             return
@@ -293,7 +297,7 @@ class TableDetectionNode(Node):
         max_two_point_dist = 0.05  # Maximum distance between 2 laser reading to be in 1 group
         min_group_size = 5
 
-        table_leg_size = 0.1
+        table_leg_size = 0.8
 
         table_x_size = 0.5
         table_y_size = 0.5
@@ -395,6 +399,7 @@ class TableDetectionNode(Node):
             all_legs.append(leg)
 
         dst_btw_legs = []
+        table = False
         for i, leg in enumerate(all_legs):
             dst_btw_legs.clear()
             for j, leg_next in enumerate(all_legs):
@@ -438,7 +443,7 @@ class TableDetectionNode(Node):
                         (leg_x or leg_y):
                     #print("leg_mid")
                     if leg_x and leg_y:
-                        self.get_logger().info(f'Both x, y legss found between midle')
+                        #self.get_logger().info(f'Both x, y legss found between midle')
                         break
                     target_leg_idx = leg_x if leg_x else leg_y
 
@@ -451,233 +456,57 @@ class TableDetectionNode(Node):
                         leg_middle = j
                         leg_idx.append(j)
                 if leg_x and  leg_y and leg_middle:
-                    break
+                    real_legs.clear()
+                    real_legs.append(all_legs[i])  # Current leg
+                    real_legs.append(all_legs[leg_x]) 
+                    real_legs.append(all_legs[leg_y]) 
+                    real_legs.append(all_legs[leg_middle])
+                    real_legs.sort(key=lambda leg: math.sqrt(leg.x**2 + leg.y**2))
+
+                    d1 = math.sqrt((real_legs[0].x - real_legs[1].x)**2 + (real_legs[0].y - real_legs[1].y)**2)
+                    d2 = math.sqrt((real_legs[1].x - real_legs[2].x)**2 + (real_legs[1].y - real_legs[2].y)**2)
+                    d3 = math.sqrt((real_legs[2].x - real_legs[3].x)**2 + (real_legs[2].y - real_legs[3].y)**2)
+                    d4 = math.sqrt((real_legs[3].x - real_legs[0].x)**2 + (real_legs[3].y - real_legs[0].y)**2)
+                    d14 = d1+d2+d3+d4
+                    print(d1, d2, d3,d4, d14)
+
+                    if abs(table_x_size*2 + table_diagnol*2  - d14) < 0.1 and \
+                        abs(table_x_size - d1) < 0.05 and \
+                        abs(table_diagnol - d2) < 0.05 and \
+                        abs(table_x_size - d3) < 0.05 and \
+                        abs(table_diagnol - d4) < 0.05:
+                        #print("table")
+                        table = True
+                        break
+                    #table = True
             
-            if leg_x and  leg_y and leg_middle:
-                table = True
+            if table:
                 break
             
         if table:
-            self.get_logger().info("TABLE")
-            real_legs.clear()
-            real_legs.append(all_legs[i])  # Current leg
-            real_legs.append(all_legs[leg_x]) 
-            real_legs.append(all_legs[leg_y]) 
-            real_legs.append(all_legs[leg_middle])
+            #self.get_logger().info("TABLE")
+            # real_legs.clear()
+            # real_legs.append(all_legs[i])  # Current leg
+            # real_legs.append(all_legs[leg_x]) 
+            # real_legs.append(all_legs[leg_y]) 
+            # real_legs.append(all_legs[leg_middle])
 
-            real_legs.sort(key=lambda leg: math.sqrt(leg.x**2 + leg.y**2))
+            # real_legs.sort(key=lambda leg: math.sqrt(leg.x**2 + leg.y**2))
 
             for i, leg in enumerate(real_legs):
                 self.publish_tf(leg.x, leg.y, frame_name=f"leg_{i}")
 
             self.is_table = True
         else:
-            self.get_logger().info("NO TABLE")
+            #self.get_logger().info("NO TABLE")
             self.is_table = False
+        
+        tabe_msg = Bool()
+        tabe_msg.data = self.is_table
+        self.table_pub.publish(tabe_msg)
 
 
         return
-
-        if table:
-            #self.get_logger().info("TABLE")
-            # info = f"{i}" for i in leg_idx
-            #self.get_logger().info("".join(map(str, leg_idx)))
-            front_left_leg = table_legs[0]
-            back_left_leg = table_legs[leg_idx[0]+1]
-            back_right_leg = table_legs[leg_idx[1]+1]
-            front_right_leg = table_legs[leg_idx[2]+1]
-        else:
-            self.get_logger().info("NO TABLE")
-        
-        if table:
-            legs = [front_left_leg, back_left_leg, back_right_leg, front_right_leg]
-            # Sort legs by length to robot
-            legs.sort(key=lambda x:x.distance)
-            #self.get_logger().info("__________")
-            legs_x = 0
-            legs_y = 0
-            for i, leg in enumerate(legs):
-                x = leg.distance * math.cos(leg.angle)
-                y = leg.distance * math.sin(leg.angle)
-                legs_x += x
-                legs_y +=y
-                self.publish_tf(x, y, frame_name=f"leg_{i}")
-                # self.get_logger().info(f"angle: {leg.angle:.2f}")
-                # self.get_logger().info(f"dist: {leg.distance:.2f}")
-
-
-            # mean_angle = mean([i.angle for i in legs])
-            # mean_distance = mean([i.distance for i in legs])
-            # x = mean_distance * math.cos(mean_angle)
-            # y = mean_distance * math.sin(mean_angle)
-            
-            self.publish_tf(legs_x/4, legs_y/4)
-
-            legs.sort(key=lambda x:x.distance)
-
-            first_leg = legs[0]
-            second_leg = legs[1]
-            first_leg_x = first_leg.distance * math.cos(first_leg.angle)
-            first_leg_y = first_leg.distance * math.sin(first_leg.angle)
-            second_leg_x = second_leg.distance * math.cos(second_leg.angle)
-            second_leg_y = second_leg.distance * math.sin(second_leg.angle)
-
-            x_mid = (first_leg_x + second_leg_x)/2
-            y_mid = (first_leg_y + second_leg_y)/2
-            slope = second_leg_y - first_leg_y / second_leg_x - first_leg_x
-            #self.publish_tf(x_mid, y_mid, theta=slope, frame_name="pre_table_frame")
-
-            self.is_table = True
-
-        else:
-            self.is_table = False
-
-        ### END NEW METHOD ###
-
-        table = False
-        class TableLeg:
-            distance = 0
-            angle = 0
-
-        front_left_leg = TableLeg()
-        back_left_leg = TableLeg()
-        back_right_leg = TableLeg()
-        front_right_leg = TableLeg()
-    
-        if len(filtered_groups) < 4:
-            print("Too less groups")
-
-        # Calculate distacne betwen groups
-        for i, group in enumerate(filtered_groups):
-            # Check if there are at least 3 legs left
-            if not len(filtered_groups) - i >= 3:
-                #print("NO TABLE")
-                break
-            if len(list(zip(*group))) == 0:
-                continue
-            first_leg = TableLeg()
-            first_leg.distance = mean(list(zip(*group))[0])
-            first_leg.angle = mean(list(zip(*group))[1])
-            possible_table_leg_distances = []
-            table_legs = []
-            table_legs.append(first_leg)
-
-            for j, group_target in enumerate(filtered_groups):
-                if j <= i:
-                    continue
-                possible_leg = TableLeg()
-                possible_leg.distance = mean(list(zip(*group_target))[0])
-                possible_leg.angle = mean(list(zip(*group_target))[1])
-                dist_between_start_end = self.distance_between_polar_coordinates(
-                    first_leg.distance,
-                    first_leg.angle,
-                    possible_leg.distance,
-                    possible_leg.angle)
-                possible_table_leg_distances.append(dist_between_start_end)
-                table_legs.append(possible_leg)
-
-            
-            # Analyze distances
-            #print(dst)
-            #print([f"{i:.2f}" for i in possible_table_leg_distances])
-
-            #print(len(possible_table_leg_distances), len(table_legs))
-
-            leg_x = False
-            leg_y = False
-            leg_middle = False
-            leg_idx = []
-            for i, d in enumerate(possible_table_leg_distances):
-                x_size = abs(d - table_x_size)
-                y_size = abs(d - table_y_size)
-                diagnol_size = abs(d - table_diagnol)
-
-                # print("Table errors:")
-                # print(x_size, y_size, diagnol_size)
-
-                if x_size < table_size_tolerance and \
-                        y_size < table_size_tolerance:
-                    if  not leg_x: #x_size < y_size and
-                        #print(f"leg_x 1: {x_size}")
-                        leg_x = True
-                        leg_idx.append(i)
-                    elif not leg_y:
-                        #print(f"leg_y 1: {y_size}")
-                        leg_y = True
-                        leg_idx.append(i)
-                elif x_size < table_size_tolerance and not leg_x:
-                    #print(f"leg_x 2: {x_size}")
-                    leg_x = True
-                    leg_idx.append(i)
-                elif y_size < table_size_tolerance and not leg_y:
-                    #print(f"leg_y 2: {y_size}")
-                    leg_y = True
-                    leg_idx.append(i)   
-                if diagnol_size < table_size_tolerance and \
-                        (leg_x or leg_y):
-                    #print("leg_mid")
-                    leg_middle = True
-                    leg_idx.append(i)
-                if leg_x and  leg_y and leg_middle:
-                    break
-            
-            if leg_x and  leg_y and leg_middle:
-                table = True
-                #print([f"{d:.2f} " for d in possible_table_leg_distances])
-                break
-        if table:
-            #self.get_logger().info("TABLE")
-            # info = f"{i}" for i in leg_idx
-            #self.get_logger().info("".join(map(str, leg_idx)))
-            front_left_leg = table_legs[0]
-            back_left_leg = table_legs[leg_idx[0]+1]
-            back_right_leg = table_legs[leg_idx[1]+1]
-            front_right_leg = table_legs[leg_idx[2]+1]
-        else:
-            self.get_logger().info("NO TABLE")
-        
-        if table:
-            legs = [front_left_leg, back_left_leg, back_right_leg, front_right_leg]
-            # Sort legs by length to robot
-            legs.sort(key=lambda x:x.distance)
-            #self.get_logger().info("__________")
-            legs_x = 0
-            legs_y = 0
-            for i, leg in enumerate(legs):
-                x = leg.distance * math.cos(leg.angle)
-                y = leg.distance * math.sin(leg.angle)
-                legs_x += x
-                legs_y +=y
-                self.publish_tf(x, y, frame_name=f"leg_{i}")
-                # self.get_logger().info(f"angle: {leg.angle:.2f}")
-                # self.get_logger().info(f"dist: {leg.distance:.2f}")
-
-
-            # mean_angle = mean([i.angle for i in legs])
-            # mean_distance = mean([i.distance for i in legs])
-            # x = mean_distance * math.cos(mean_angle)
-            # y = mean_distance * math.sin(mean_angle)
-            
-            self.publish_tf(legs_x/4, legs_y/4)
-
-            legs.sort(key=lambda x:x.distance)
-
-            first_leg = legs[0]
-            second_leg = legs[1]
-            first_leg_x = first_leg.distance * math.cos(first_leg.angle)
-            first_leg_y = first_leg.distance * math.sin(first_leg.angle)
-            second_leg_x = second_leg.distance * math.cos(second_leg.angle)
-            second_leg_y = second_leg.distance * math.sin(second_leg.angle)
-
-            x_mid = (first_leg_x + second_leg_x)/2
-            y_mid = (first_leg_y + second_leg_y)/2
-            slope = second_leg_y - first_leg_y / second_leg_x - first_leg_x
-            #self.publish_tf(x_mid, y_mid, theta=slope, frame_name="pre_table_frame")
-
-            self.is_table = True
-
-        else:
-            self.is_table = False
 
 
     

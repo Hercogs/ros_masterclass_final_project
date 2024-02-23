@@ -27,6 +27,7 @@ setup(
             "table_detection = robot_firmware.table_detection:main",
             "tf2_listener = robot_firmware.tf2_listener:main",
             "action = robot_firmware.action:main",
+            "test_nav2 = robot_firmware.test_nav2:main",
         ],
     },
 )
