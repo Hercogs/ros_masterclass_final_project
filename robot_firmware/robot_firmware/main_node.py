@@ -11,7 +11,8 @@ from robot_firmware_interfaces.action import AproachTable  # import the action m
 from geometry_msgs.msg import PoseStamped
 from action_msgs.msg import GoalStatus
 
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, String
+from geometry_msgs.msg import PoseStamped, TransformStamped, Twist
 
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
@@ -59,16 +60,28 @@ class MainNode(Node):
         # self.get_logger().info('Initializing robot pose...')
         # self.set_initial_position()
         
+        
+        # Create Twist publisher
+        self.speed_pub = self.create_publisher(Twist, '/turtlebot_5/cmd_vel', 3)
         # Create table elevator pubishers
+        self.table_up_pub = self.create_publisher(String, '/elevator_up', 3)
+        self.table_down_pub = self.create_publisher(String, '/elevator_down', 3)
 
 
         self.home_pos = (4.4, -1.2, 1.57)
         self.target_points = [
-            (2.6, 0.4, 1.57*2),
-            (2.0, 0.4, 1.57*2),
-            (1.5, 0.4, 1.57*2),
-            (1.3, 0.0, 0.0),
+            (3.5, 0.5, 1.57*2),
+            (3.0, 0.7, 1.57*2),
+            (2.5, 0.8, 1.57*2),
+            (2.0, 0.85, 1.57*2),
+            (1.2, 0.85, 1.57*2), # Left side of table in front
+
+            (1.2, 0.0, 0.0),
+            (2.0, 0.0, 0.0),
+            (2.5, 0.0, 0.0),
+            (3.0, 0.0, 0.0),
         ]
+
         self.target_points.append(self.home_pos)
 
         # TODO set table left point
@@ -99,7 +112,7 @@ class MainNode(Node):
 
 
         # Step 2 - trye to approach table
-        (status, result) = self.aproach_table(dummy_aproach=True)
+        (status, result) = self.aproach_table(dummy_aproach=False)
         if status != GoalStatus.STATUS_SUCCEEDED :
             print(f"action client failed: {status}")
             # TODO process failed task
@@ -112,6 +125,13 @@ class MainNode(Node):
             return
 
         print(f"action server finished with robot uinder the table with result {result.result}")
+        self.table_up_pub.publish(Bool())
+        self.create_rate(1 / 3.0).sleep()  # Sleep 3 sec
+
+        self.move_robot(2.0, 0.2)
+
+        #  Go to unloading point
+
 
 
         # Step 3 - Rotate robot
@@ -196,8 +216,17 @@ class MainNode(Node):
 
             if self.is_table:
                 self.navigator.cancelTask()
+                while not self.navigator.isTaskComplete():
+                    self.create_rate(1.0).sleep() # Sleep 2sec
 
-            if feedback and i % 20 == 0:
+                if not self.is_table:
+                    print("Continue started task")
+                    self.navigator.goToPose(pose)
+                else:
+                    print("There is actually table")
+
+
+            if feedback and i % 50 == 0:
                 # print(
                 #     'Estimated time of arrival at '
                 #     + str(shelf_item_pose.pose)
@@ -225,7 +254,16 @@ class MainNode(Node):
         status = res.status
         result = res.result
         return (status, result)
-
+    
+    def move_robot(self, timeout, speed) -> bool:
+        msg = Twist()
+        msg.linear.x = speed
+        time = 0
+        rate = 10
+        while time < timeout:
+            time += 1/rate
+            self.speed_pub.publish(msg)
+            self.create_rate(rate).sleep()
     
 
     def rotate_robot(self, yaw) -> bool:

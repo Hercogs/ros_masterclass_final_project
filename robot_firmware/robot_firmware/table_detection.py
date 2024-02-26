@@ -22,6 +22,7 @@ from rclpy.executors import MultiThreadedExecutor
 
 # ros2 action send_goal /aproach_table robot_firmware_interfaces/action/AproachTable "dummy_aproach: true"
 
+# Radius 0.36
 
 class TableDetectionNode(Node):
     def __init__(self):
@@ -76,6 +77,14 @@ class TableDetectionNode(Node):
         # return result
 
         dummy_aproach = goal_handle.request.dummy_aproach
+
+        i = 0
+        while not self.is_table:
+            i += 1
+            self.create_rate(10.0).sleep()
+            if self.is_table:
+                break
+
 
         if not self.is_table:
             print("Table not found")
@@ -152,9 +161,16 @@ class TableDetectionNode(Node):
         msg.linear.x = 0.0
         msg.angular.z = 0.0
         self.speed_pub.publish(msg)
-        #self.create_rate(1.0).sleep()
+        self.create_rate(10.0).sleep()
 
         # CHeck if there is still table
+        i = 0
+        while not self.is_table and i < 10:
+            i += 1
+            self.create_rate(10.0).sleep()
+            if self.is_table:
+                break
+
         if not self.is_table:
             print("Table not found after in fro of table")
             result.result = 1
@@ -180,7 +196,7 @@ class TableDetectionNode(Node):
         ref_frame = 'back_table_frame'
 
         msg = Twist()
-        while(distance > 0.23):
+        while(distance > 0.27):
         # Stop publish whgen uder, so no mistkaes
             if distance < 0.8:
                 self.publish_table_tf = False
@@ -468,9 +484,9 @@ class TableDetectionNode(Node):
                     d3 = math.sqrt((real_legs[2].x - real_legs[3].x)**2 + (real_legs[2].y - real_legs[3].y)**2)
                     d4 = math.sqrt((real_legs[3].x - real_legs[0].x)**2 + (real_legs[3].y - real_legs[0].y)**2)
                     d14 = d1+d2+d3+d4
-                    print(d1, d2, d3,d4, d14)
+                    #print(d1, d2, d3,d4, d14)
 
-                    if abs(table_x_size*2 + table_diagnol*2  - d14) < 0.1 and \
+                    if abs(table_x_size*2 + table_diagnol*2  - d14) < 0.12 and \
                         abs(table_x_size - d1) < 0.05 and \
                         abs(table_diagnol - d2) < 0.05 and \
                         abs(table_x_size - d3) < 0.05 and \
