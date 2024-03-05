@@ -22,6 +22,7 @@ from rclpy.executors import MultiThreadedExecutor
 
 # ros2 action send_goal /aproach_table robot_firmware_interfaces/action/AproachTable "dummy_aproach: true"
 
+# ros2 launch path_planner_server pathplanner.launch.py
 # Radius 0.36
 
 class TableDetectionNode(Node):
@@ -61,6 +62,7 @@ class TableDetectionNode(Node):
 
         self.publish_table_tf = True  # defult False
         self.is_table = False
+        self.maybe_table = False
     
 
     def execute_action_callback(self, goal_handle):
@@ -111,7 +113,7 @@ class TableDetectionNode(Node):
             distance = math.sqrt(x1**2 + y1**2)
             angle = math.atan2(y1, x1)
 
-            print(f'Dst: {distance:.2f}, angle: {angle:.2f}')
+            #print(f'Dst: {distance:.2f}, angle: {angle:.2f}')
 
             if abs(angle) > 0.20: # 13 degree
                 msg.linear.x = 0.0
@@ -206,7 +208,7 @@ class TableDetectionNode(Node):
             distance = math.sqrt(x1**2 + y1**2)
             angle = math.atan2(y1, x1)
 
-            print(f'Dst: {distance:.2f}, angle: {angle:.2f}')
+            #print(f'Dst: {distance:.2f}, angle: {angle:.2f}')
 
             if abs(angle) > 0.20: # 13 degree
                 msg.linear.x = 0.0
@@ -240,11 +242,38 @@ class TableDetectionNode(Node):
     def timer_tf_clb(self):
         # NOTE - timer execution might be longer than callback interval
 
-        if not self.is_table:
+        if not self.maybe_table:
             return
 
         # Is table 
         frame_name = [f"leg_{i}" for i in range(4)]
+
+        zone_y = 1.2
+        tabe_msg = Bool()
+        table_wrong = False
+        
+        check_frames = ["leg_0", "leg_1", "leg_2", "leg_3", "pre_table_frame"]
+        for frame in frame_name:
+            x, y = self.read_tf(target_frame="map", ref_frame=frame)
+            if y == None:
+                return
+
+            if y > zone_y:
+                #print(f"Not table or not allowed psoition")
+                table_wrong = True
+                break
+        
+        if table_wrong:
+            tabe_msg.data = False
+            self.is_table = False
+            self.table_pub.publish(tabe_msg)
+            return
+        else:
+            tabe_msg.data = True
+            self.is_table = True
+            self.table_pub.publish(tabe_msg)
+
+
 
         # Get first leg pos
         x1, y1 = self.read_tf(target_frame="turtlebot_5_odom", ref_frame="leg_0") #map
@@ -294,6 +323,10 @@ class TableDetectionNode(Node):
         
         self.publish_tf(0.0, y, theta=0.0, parent_frame = "front_table_frame", frame_name="pre_table_frame")
 
+        # Check if table is allowd zones
+        # TODO make it cleaner
+
+
 
 
 
@@ -307,26 +340,26 @@ class TableDetectionNode(Node):
         ranges = msg.ranges
 
         # Define the minimum and maximum distances for table legs
-        min_range = 0.2  # Minimum range value for table detection
+        min_range = 0.22  # Minimum range value for table detection
         max_range = 1.0  # Maximum range value for table detection
 
         max_two_point_dist = 0.05  # Maximum distance between 2 laser reading to be in 1 group
         min_group_size = 5
 
-        table_leg_size = 0.8
+        table_leg_size = 0.9
 
         table_x_size = 0.5
         table_y_size = 0.5
         table_diagnol = math.sqrt(table_x_size**2 + table_y_size**2)
         table_size_tolerance = 0.05
 
-        #group = []
+        # Reverse 
         prev_range = msg.ranges[0]
         scans_too_big = 0
 
                 # Filter parameters
-        min_distance = 0.2  # Minimum distance to keep
-        max_distance = 2.0  # Maximum distance to keep
+        min_distance = 0.22  # Minimum distance to keep
+        max_distance = 1.5  # Maximum distance to keep
 
         # Create a new LaserScan message for filtered data
         filtered_msg = LaserScan()
@@ -393,6 +426,7 @@ class TableDetectionNode(Node):
             y = mean_dist* math.sin(mean_angle)
 
             #self.publish_tf(x, y, frame_name=f"leg_{i}")
+        
         
 
         ### NEW METHOD ###
@@ -486,11 +520,10 @@ class TableDetectionNode(Node):
                     d14 = d1+d2+d3+d4
                     #print(d1, d2, d3,d4, d14)
 
-                    if abs(table_x_size*2 + table_diagnol*2  - d14) < 0.12 and \
-                        abs(table_x_size - d1) < 0.05 and \
-                        abs(table_diagnol - d2) < 0.05 and \
-                        abs(table_x_size - d3) < 0.05 and \
-                        abs(table_diagnol - d4) < 0.05:
+                    if  abs(table_x_size - d1) < table_size_tolerance and \
+                        abs(table_diagnol - d2) < table_size_tolerance and \
+                        abs(table_x_size - d3) < table_size_tolerance and \
+                        abs(table_diagnol - d4) < table_size_tolerance:
                         #print("table")
                         table = True
                         break
@@ -512,14 +545,15 @@ class TableDetectionNode(Node):
             for i, leg in enumerate(real_legs):
                 self.publish_tf(leg.x, leg.y, frame_name=f"leg_{i}")
 
-            self.is_table = True
+            self.maybe_table = True
         else:
             #self.get_logger().info("NO TABLE")
-            self.is_table = False
+            self.maybe_table = False
+            pass
         
         tabe_msg = Bool()
         tabe_msg.data = self.is_table
-        self.table_pub.publish(tabe_msg)
+        #self.table_pub.publish(tabe_msg)
 
 
         return
@@ -552,7 +586,7 @@ class TableDetectionNode(Node):
         self.br.sendTransform(transfor_msg)
 
 
-    def read_tf(self, target_frame, ref_frame, fixed_frame="turtlebot_5_odom"):
+    def read_tf(self, target_frame, ref_frame, fixed_frame="map"):
         try:
             t = self.tf_buffer.lookup_transform_full(
                 target_frame=target_frame,

@@ -69,17 +69,20 @@ class MainNode(Node):
 
 
         self.home_pos = (4.4, -1.2, 1.57)
-        self.target_points = [
-            (3.5, 0.5, 1.57*2),
-            (3.0, 0.7, 1.57*2),
-            (2.5, 0.8, 1.57*2),
-            (2.0, 0.85, 1.57*2),
-            (1.2, 0.85, 1.57*2), # Left side of table in front
+        self.table_target_pos = (-1.25, 1.0, 1.57)
 
-            (1.2, 0.0, 0.0),
-            (2.0, 0.0, 0.0),
-            (2.5, 0.0, 0.0),
-            (3.0, 0.0, 0.0),
+
+        self.target_points = [
+            (3.5, -0.0, 1.57*2),
+            (3.0, -0.1, 1.57*2),
+            (2.5, -0.2, 1.57*2),
+            (2.0, -0.2, 1.57*2),
+            (1.2, -0.1, 1.57*2), # Left side of table in front
+
+            (1.2, 0.7, 0.0),
+            (2.0, 0.8, 0.0),
+            (2.5, 0.7, 0.0),
+            (3.0, 0.8, 0.0),
         ]
 
         self.target_points.append(self.home_pos)
@@ -95,6 +98,10 @@ class MainNode(Node):
 
     def timer_clb(self):
         self.timer.cancel()
+
+        # # Move down table for safety
+        self.table_down_pub.publish(String())
+
         self.action_status = False
 
         # Step 1 - go to known location where table might be
@@ -113,6 +120,7 @@ class MainNode(Node):
 
         # Step 2 - trye to approach table
         (status, result) = self.aproach_table(dummy_aproach=False)
+        print("Calling action to approach table")
         if status != GoalStatus.STATUS_SUCCEEDED :
             print(f"action client failed: {status}")
             # TODO process failed task
@@ -125,12 +133,49 @@ class MainNode(Node):
             return
 
         print(f"action server finished with robot uinder the table with result {result.result}")
-        self.table_up_pub.publish(Bool())
+        self.table_up_pub.publish(String())
         self.create_rate(1 / 3.0).sleep()  # Sleep 3 sec
 
-        self.move_robot(2.0, 0.2)
+        self.move_robot(2.0, -0.2)  # Time, speed
 
         #  Go to unloading point
+        result = self.go_to_pose(
+                self.table_target_pos[0],
+                self.table_target_pos[1],
+                self.table_target_pos[2],
+                search_table=False
+        )
+        if result != TaskResult.SUCCEEDED:
+            print(f"Going to table target: FAILED {result}, but continue")
+            # TODO
+            return
+        
+        # Move down table
+        self.table_down_pub.publish(String())
+        self.create_rate(1 / 3.0).sleep()  # Sleep 3 sec
+
+        self.move_robot(4.0, -0.2)  # Time, speed
+
+        # Turn robot as well
+        result = self.rotate_robot(1.57*2)
+        if not result:
+            print(f"Could not turn the robot")
+            # TODO
+            return
+        
+        #  Go to home point
+        result = self.go_to_pose(
+                self.home_pos[0],
+                self.home_pos[1],
+                self.home_pos[2],
+                search_table=False
+        )
+        if result != TaskResult.SUCCEEDED:
+            print(f"Going to table target: FAILED {result}, but continue")
+            # TODO
+            return
+        
+        print("HOMEEE")
 
 
 
@@ -214,16 +259,17 @@ class MainNode(Node):
             i += 1
             feedback = self.navigator.getFeedback()
 
-            if self.is_table:
-                self.navigator.cancelTask()
-                while not self.navigator.isTaskComplete():
-                    self.create_rate(1.0).sleep() # Sleep 2sec
+            if search_table:
+                if self.is_table:
+                    self.navigator.cancelTask()
+                    while not self.navigator.isTaskComplete():
+                        self.create_rate(1.0).sleep() # Sleep 2sec
 
-                if not self.is_table:
-                    print("Continue started task")
-                    self.navigator.goToPose(pose)
-                else:
-                    print("There is actually table")
+                    if not self.is_table:
+                        print("Continue started task")
+                        self.navigator.goToPose(pose)
+                    else:
+                        print("There is actually table")
 
 
             if feedback and i % 50 == 0:

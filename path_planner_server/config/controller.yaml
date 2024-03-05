@@ -20,7 +20,7 @@ controller_server:
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       stateful: True # Does not check goal
-      xy_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.30
       yaw_goal_tolerance: 0.25
     # DWB parameters
     FollowPath:
@@ -47,13 +47,13 @@ controller_server:
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
-      xy_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.30
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       BaseObstacle.scale: 0.02
-      PathAlign.scale: 32.0
+      PathAlign.scale: 32.0  # global path
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 24.0
       GoalAlign.forward_point_distance: 0.1
@@ -90,7 +90,7 @@ local_costmap:
       width: 2
       height: 2
       resolution: 0.025
-      robot_radius: 0.2
+      robot_radius: 0.3
       #footprint: "[[0.2, 0.2], [-0.2, 0.2], [-0.2, -0.2], [0.2, -0.2]]"
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
