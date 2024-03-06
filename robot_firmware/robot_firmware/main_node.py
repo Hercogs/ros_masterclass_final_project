@@ -20,6 +20,8 @@ from rclpy.executors import MultiThreadedExecutor
 
 from tf_transformations  import quaternion_from_euler
 
+from std_srvs.srv import SetBool
+
 # ros2 run robot_firmware main_node --ros-args -p use_sim_time:=true
 
 # Home position
@@ -34,6 +36,8 @@ trash_table_position = {
     "table_1": [-0.25, 1.20, 0.0, -1.57],
 }
 
+
+# -1.07, -0.5
 
 class MainNode(Node):
 
@@ -59,6 +63,8 @@ class MainNode(Node):
 
         # self.get_logger().info('Initializing robot pose...')
         # self.set_initial_position()
+
+        self.srv = self.create_service(SetBool, '/set_bool', self.set_bool_callback, callback_group=MutuallyExclusiveCallbackGroup())
         
         
         # Create Twist publisher
@@ -69,19 +75,24 @@ class MainNode(Node):
 
 
         self.home_pos = (4.4, -1.2, 1.57)
-        self.table_target_pos = (-1.25, 1.0, 1.57)
+        self.table_target_pos = (-1.40, 1.0, 1.57)
 
 
         self.target_points = [
             (3.5, -0.0, 1.57*2),
-            (3.0, -0.1, 1.57*2),
-            (2.5, -0.2, 1.57*2),
+            (3.0, -0.15, 1.57*2),
+            (2.5, -0.0, 1.57*2),
             (2.0, -0.2, 1.57*2),
-            (1.2, -0.1, 1.57*2), # Left side of table in front
+            (1.2, -0.05, 1.57*2), # Left side of table in front
 
-            (1.2, 0.7, 0.0),
+            (0.9, -0.05, 1.57*2),
+            (0.9, 0.65, 0.0),
+
+            #(0.7, 0.3, 1.57*2),
+
+            (1.2, 0.65, 0.0),
             (2.0, 0.8, 0.0),
-            (2.5, 0.7, 0.0),
+            (2.5, 0.65, 0.0),
             (3.0, 0.8, 0.0),
         ]
 
@@ -90,6 +101,14 @@ class MainNode(Node):
         # TODO set table left point
 
         self.get_logger().info('Main node started')
+    
+    def set_bool_callback(self, request, response):
+        print(f"service: {request.data}")
+        # Handle the request and set the response
+        response.success = True  # Set the response to True for demonstration purposes
+        response.message = 'Bool value set successfully'
+        self.get_logger().info('Bool value set to True')
+        return response
     
 
     def table_sub_clb(self, msg):

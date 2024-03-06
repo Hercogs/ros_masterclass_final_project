@@ -1,7 +1,7 @@
 controller_server:
   ros__parameters:
     use_sim_time: False
-    controller_frequency: 20.0
+    controller_frequency: 10.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
@@ -24,13 +24,23 @@ controller_server:
       yaw_goal_tolerance: 0.25
     # DWB parameters
     FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"
+      # https://navigation.ros.org/configuration/packages/configuring-rotation-shim-controller.html#configuring-rotation-shim
+
+      #plugin: "dwb_core::DWBLocalPlanner"
+      plugin: "nav2_rotation_shim_controller::RotationShimController"
+      primary_controller: "dwb_core::DWBLocalPlanner"
+      angular_dist_threshold: 0.785
+      forward_sampling_distance: 0.5
+      rotate_to_heading_angular_vel: 1.5
+      max_angular_accel: 3.2
+      simulate_ahead_time: 1.0
+
       debug_trajectory_details: True
       min_vel_x: 0.0
       min_vel_y: 0.0
       max_vel_x: 0.12
       max_vel_y: 0.0
-      max_vel_theta: 0.3
+      max_vel_theta: 1.0
       min_speed_xy: 0.0
       max_speed_xy: 0.25
       min_speed_theta: 0.0
@@ -52,7 +62,7 @@ controller_server:
       short_circuit_trajectory_evaluation: True
       stateful: True
       critics: ["RotateToGoal", "Oscillation", "ObstacleFootprint", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      BaseObstacle.scale: 0.02
+      BaseObstacle.scale: 0.12
       PathAlign.scale: 32.0  # global path
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 24.0
@@ -94,12 +104,12 @@ local_costmap:
       height: 2
       resolution: 0.025
       #robot_radius: 0.3
-      footprint: "[[0.25, 0.25], [-0.25, 0.25], [-0.25, -0.25], [0.25, -0.25]]"
+      footprint: "[[0.27, 0.27], [-0.27, 0.27], [-0.27, -0.27], [0.27, -0.27]]"
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        cost_scaling_factor: 6.0
+        inflation_radius: 0.75
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -120,6 +130,6 @@ local_costmap:
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.9
-          obstacle_min_range: 0.45
+          obstacle_min_range: 0.50
       always_send_full_costmap: True
         

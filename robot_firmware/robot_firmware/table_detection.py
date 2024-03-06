@@ -152,7 +152,7 @@ class TableDetectionNode(Node):
 
             # print(f'Dst: {distance:.2f}, angle: {angle:.2f}')
 
-            msg.angular.z = 0.20 * angle / abs(angle)
+            msg.angular.z = 0.35 * angle / abs(angle)
 
             self.speed_pub.publish(msg)
 

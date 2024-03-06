@@ -28,6 +28,7 @@ setup(
             "tf2_listener = robot_firmware.tf2_listener:main",
             "action = robot_firmware.action:main",
             "test_nav2 = robot_firmware.test_nav2:main",
+            "remap_robot_description = robot_firmware.remap_robot_description:main",
         ],
     },
 )

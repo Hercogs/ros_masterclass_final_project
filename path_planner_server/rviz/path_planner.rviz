@@ -35,43 +35,62 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 15
       Frames:
-        All Enabled: true
+        All Enabled: false
+        back_table_frame:
+          Value: true
+        front_table_frame:
+          Value: true
+        leg_0:
+          Value: true
+        leg_1:
+          Value: true
+        leg_2:
+          Value: true
+        leg_3:
+          Value: true
         map:
+          Value: true
+        pre_table_frame:
           Value: true
         turtlebot_5_base_footprint:
           Value: true
         turtlebot_5_base_link:
           Value: true
         turtlebot_5_caster_back_link:
-          Value: true
+          Value: false
         turtlebot_5_caster_front_link:
-          Value: true
+          Value: false
         turtlebot_5_cliff_sensor_front_link:
-          Value: true
+          Value: false
         turtlebot_5_cliff_sensor_left_link:
-          Value: true
+          Value: false
         turtlebot_5_cliff_sensor_right_link:
-          Value: true
+          Value: false
         turtlebot_5_gyro_link:
-          Value: true
+          Value: false
         turtlebot_5_laser_link:
           Value: true
         turtlebot_5_odom:
           Value: true
         turtlebot_5_plate_bottom_link:
-          Value: true
+          Value: false
         turtlebot_5_plate_middle_link:
-          Value: true
+          Value: false
         turtlebot_5_plate_top_link:
-          Value: true
-      Marker Scale: 1
+          Value: false
+      Marker Scale: 0.699999988079071
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: false
+      Show Names: true
       Tree:
         map:
           turtlebot_5_odom:
+            back_table_frame:
+              {}
+            front_table_frame:
+              pre_table_frame:
+                {}
             turtlebot_5_base_footprint:
               turtlebot_5_base_link:
                 turtlebot_5_caster_back_link:
@@ -87,7 +106,14 @@ Visualization Manager:
                 turtlebot_5_gyro_link:
                   {}
                 turtlebot_5_laser_link:
-                  {}
+                  leg_0:
+                    {}
+                  leg_1:
+                    {}
+                  leg_2:
+                    {}
+                  leg_3:
+                    {}
                 turtlebot_5_plate_bottom_link:
                   {}
                 turtlebot_5_plate_middle_link:
@@ -390,16 +416,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 9.992130279541016
+      Distance: 2.782817840576172
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.279092788696289
-        Y: -1.4506858587265015
-        Z: 0.0213773250579834
+        X: 0.42830485105514526
+        Y: 0.07488511502742767
+        Z: -0.3001894950866699
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
