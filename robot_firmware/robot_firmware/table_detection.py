@@ -20,10 +20,10 @@ from rclpy.executors import MultiThreadedExecutor
 
 # ros2 run robot_firmware table_detection
 
-# ros2 action send_goal /aproach_table robot_firmware_interfaces/action/AproachTable "dummy_aproach: true"
+# ros2 action send_goal /aproach_table robot_firmware_interfaces/action/AproachTable "dummy_aproach: false"
 
 # ros2 launch path_planner_server pathplanner.launch.py
-# Radius 0.36
+
 
 class TableDetectionNode(Node):
     def __init__(self):
@@ -81,7 +81,7 @@ class TableDetectionNode(Node):
         dummy_aproach = goal_handle.request.dummy_aproach
 
         i = 0
-        while not self.is_table:
+        while not self.is_table and i < 10:
             i += 1
             self.create_rate(10.0).sleep()
             if self.is_table:
@@ -93,7 +93,7 @@ class TableDetectionNode(Node):
             result.result = 1
             result.msg = "Table not found"
             goal_handle.succeed()
-            self.publish_table_tf = False
+            #self.publish_table_tf = False
             return result
 
         # try to reach pre_table_link
@@ -105,10 +105,17 @@ class TableDetectionNode(Node):
         distance = 99.0
         # angle = 0.0
 
+        i = 0
         msg = Twist()
         while(distance > 0.03):
             x1, y1 = self.read_tf(target_frame=target_frame, ref_frame=ref_frame)
             if x1 == None:
+                i += 1
+                if i > 20:
+                    result.result = 1
+                    result.msg = "Table not found"
+                    goal_handle.succeed()
+                    return result
                 continue
             distance = math.sqrt(x1**2 + y1**2)
             angle = math.atan2(y1, x1)
@@ -127,7 +134,7 @@ class TableDetectionNode(Node):
 
             time.sleep(0.1)
         
-        print("Reached pre table")
+        self.get_logger().info("Reached pre table")
         # Stop robot
         msg.linear.x = 0.0
         msg.angular.z = 0.0
@@ -143,9 +150,16 @@ class TableDetectionNode(Node):
         ref_frame = 'back_table_frame'
 
         msg = Twist()
+        i = 0
         while(abs(angle) > 0.087): # 5 degrees
             x1, y1 = self.read_tf(target_frame=target_frame, ref_frame=ref_frame)
             if x1 == None:
+                i += 1
+                if i > 20:
+                    result.result = 1
+                    result.msg = "Table not found"
+                    goal_handle.succeed()
+                    return result
                 continue
             # distance = math.sqrt(x1**2 + y1**2)
             angle = math.atan2(y1, x1)
@@ -158,7 +172,7 @@ class TableDetectionNode(Node):
 
             time.sleep(0.1)
         
-        print("Turned to back table link")
+        self.get_logger().info("Turned to back table link")
         # Stop robot
         msg.linear.x = 0.0
         msg.angular.z = 0.0
@@ -198,12 +212,19 @@ class TableDetectionNode(Node):
         ref_frame = 'back_table_frame'
 
         msg = Twist()
+        i = 0
         while(distance > 0.27):
         # Stop publish whgen uder, so no mistkaes
             if distance < 0.8:
                 self.publish_table_tf = False
             x1, y1 = self.read_tf(target_frame=target_frame, ref_frame=ref_frame)
             if x1 == None:
+                i += 1
+                if i > 20:
+                    result.result = 2
+                    result.msg = "Robot stucked uunder the table"
+                    goal_handle.succeed()
+                    return
                 continue
             distance = math.sqrt(x1**2 + y1**2)
             angle = math.atan2(y1, x1)
@@ -223,7 +244,7 @@ class TableDetectionNode(Node):
             time.sleep(0.1)
 
 
-        print("Robot is under table")
+        self.get_logger().info("Robot is under table")
 
         
         # self.get_logger().error(f"Dummy approach is not implemented yet")

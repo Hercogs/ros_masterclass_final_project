@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import rclpy
-from rclpy.action import ActionServer
 from rclpy.node import Node
 from rclpy.duration import Duration
 
@@ -22,7 +21,17 @@ from tf_transformations  import quaternion_from_euler
 
 from std_srvs.srv import SetBool
 
-# ros2 run robot_firmware main_node --ros-args -p use_sim_time:=true
+"""
+colcon build --packages-select robot_firmware --symlink-install
+
+ros2 run robot_firmware main_node
+ros2 run robot_firmware table_detection
+
+ros2 action send_goal /aproach_table robot_firmware_interfaces/action/AproachTable "dummy_aproach: false"
+
+ros2 launch path_planner_server pathplanner.launch.py
+"""
+
 
 # Home position
 home_position = {
@@ -54,7 +63,7 @@ class MainNode(Node):
         self.action_cli = ActionClient(self, AproachTable, 'aproach_table')
 
         # Create dummy timer
-        self.timer = self.create_timer(1.0, self.timer_clb, callback_group=MutuallyExclusiveCallbackGroup())
+        # self.timer = self.create_timer(1.0, self.timer_clb, callback_group=MutuallyExclusiveCallbackGroup())
         self.action_status = False
     
          # Create table subscriber
@@ -64,7 +73,9 @@ class MainNode(Node):
         # self.get_logger().info('Initializing robot pose...')
         # self.set_initial_position()
 
-        self.srv = self.create_service(SetBool, '/set_bool', self.set_bool_callback, callback_group=MutuallyExclusiveCallbackGroup())
+        self.srv_clb_group = MutuallyExclusiveCallbackGroup()
+        self.srv = self.create_service(SetBool, '/move_trash_table', self.table_srv_clb, callback_group=self.srv_clb_group)
+        self.srv1 = self.create_service(SetBool, '/bring_trash_table', self.table_srv_bring_clb, callback_group=self.srv_clb_group)
         
         
         # Create Twist publisher
@@ -74,7 +85,7 @@ class MainNode(Node):
         self.table_down_pub = self.create_publisher(String, '/elevator_down', 3)
 
 
-        self.home_pos = (4.4, -1.2, 1.57)
+        self.home_pos = (4.4, -1.2, 0.0)
         self.table_target_pos = (-1.40, 1.0, 1.57)
 
 
@@ -102,21 +113,116 @@ class MainNode(Node):
 
         self.get_logger().info('Main node started')
     
-    def set_bool_callback(self, request, response):
-        print(f"service: {request.data}")
-        # Handle the request and set the response
-        response.success = True  # Set the response to True for demonstration purposes
-        response.message = 'Bool value set successfully'
-        self.get_logger().info('Bool value set to True')
+    def table_srv_bring_clb(self, request, response):
+
+        self.get_logger().info(f"Received service call to bring trash table!")
+        self.is_table = False
+
+        # Clear global costmap
+        self.navigator.clearGlobalCostmap()
+
+        # # Move down table for safety
+        self.table_down_pub.publish(String())
+
+        result = self.go_to_pose(-1.07, -0.5, 1.57*2, search_table=False)
+
+        if result != TaskResult.SUCCEEDED:
+            self.get_logger().info(f"Going to point: FAILED {result}")
+            #  Go to home point
+            result = self.go_to_pose(
+                    self.home_pos[0],
+                    self.home_pos[1],
+                    self.home_pos[2],
+                    search_table=False
+            )
+            response.success = True  # Finished without errors
+            response.message = 'Could not find way to the table'
+            return response
+        
+        result = self.go_to_pose(-1.40, 0.1, 1.57, search_table=True)
+        if not self.is_table:
+            #  Go to home point
+            result = self.go_to_pose(
+                    self.home_pos[0],
+                    self.home_pos[1],
+                    self.home_pos[2],
+                    search_table=False
+            )
+            response.success = True  # Finished without errors
+            response.message = 'Could not find the table'
+            return response
+
+        (status, result) = self.aproach_table(dummy_aproach=False)
+        print("Calling action to approach table")
+        if status != GoalStatus.STATUS_SUCCEEDED :
+            self.get_logger().error(f"Action call failes when approached table")
+
+            response.success = False  # Finished with errors
+            response.message = 'Robot got lost and ROS failed. Go and check if everything is okay'
+            return response
+        
+        # 0 - success, 1 - table not found, 2 - failed approach
+        if result.result:
+            if result.result == 1:
+                self.get_logger().info(f"Lost table during approach, go home now")
+                #  Go to home point
+                result = self.go_to_pose(
+                        self.home_pos[0],
+                        self.home_pos[1],
+                        self.home_pos[2],
+                        search_table=False
+                )
+                response.success = True  # Finished without errors
+                response.message = 'Lost table during approach, please check table orientation'
+                return response
+            
+            if result.result == 2:
+                self.get_logger().error(f"Robot is stucked under the table")
+
+                response.success = False  # Finished with errors
+                response.message = 'Robot is stucked under the table. Go and help!'
+                return response
+    
+        self.get_logger().info(f"action server finished with robot uinder the table with result {result.result}")
+        self.table_up_pub.publish(String())
+
+        self.create_rate(1 / 3.0).sleep()  # Sleep 3 sec
+
+
+        #  Go to unloading point
+        result = self.go_to_pose(
+                0.5,
+                0.5,
+                0.0,
+                search_table=False
+        )
+        if result != TaskResult.SUCCEEDED:
+            self.get_logger().error(f"Robot with table did not reached unloading point")
+
+            response.success = False  # Finished with errors
+            response.message = 'Robot with table did not reached unloading point! Go and help'
+            return response
+        
+
+        response.success = True  # Finished with errors
+        response.message = 'Great job!'
         return response
     
 
     def table_sub_clb(self, msg):
         self.is_table = msg.data
 
+    # def timer_clb(self):
+    #     self.timer.cancel()
 
-    def timer_clb(self):
-        self.timer.cancel()
+    def table_srv_clb(self, request, response):
+        
+        self.get_logger().info(f"Received service call to move trash table!")
+
+        self.is_table = False
+
+        # Clear global costmap
+        self.navigator.clearGlobalCostmap()
 
         # # Move down table for safety
         self.table_down_pub.publish(String())
@@ -130,30 +236,53 @@ class MainNode(Node):
             if self.is_table:
                 break
             if result != TaskResult.SUCCEEDED:
-                print(f"Going to point: FAILED {result}, but continue")
+                self.get_logger().info(f"Going to point: FAILED {result}, but continue")
         
         if not self.is_table:
-            print("Couldnot find any table")
-            return
+            self.get_logger().info("Couldnot find any table during search")
+            response.success = True  # Finished without errors
+            response.message = 'Couldnot find any table during search'
+            return response
 
 
-        # Step 2 - trye to approach table
+        # Step 2 - try to approach table
         (status, result) = self.aproach_table(dummy_aproach=False)
         print("Calling action to approach table")
         if status != GoalStatus.STATUS_SUCCEEDED :
-            print(f"action client failed: {status}")
-            # TODO process failed task
-            return
+            self.get_logger().error(f"Action call failes when approached table")
+
+            response.success = False  # Finished with errors
+            response.message = 'Robot got lost and ROS failed. Go and check if everything is okay'
+            return response
         
         # 0 - success, 1 - table not found, 2 - failed approach
         if result.result:
-            print(f"Action cliented returned: {result.result}, {result.msg}")
-            # TODO process failed task -  go home
-            return
+            if result.result == 1:
+                self.get_logger().info(f"Lost table during approach, go home now")
+                #  Go to home point
+                result = self.go_to_pose(
+                        self.home_pos[0],
+                        self.home_pos[1],
+                        self.home_pos[2],
+                        search_table=False
+                )
+                response.success = True  # Finished without errors
+                response.message = 'Lost table during approach, please check table orientation'
+                return response
+            
+            if result.result == 2:
+                self.get_logger().error(f"Robot is stucked under the table")
 
-        print(f"action server finished with robot uinder the table with result {result.result}")
+                response.success = False  # Finished with errors
+                response.message = 'Robot is stucked under the table. Go and help!'
+                return response
+
+
+        self.get_logger().info(f"action server finished with robot uinder the table with result {result.result}")
         self.table_up_pub.publish(String())
+
         self.create_rate(1 / 3.0).sleep()  # Sleep 3 sec
+
 
         self.move_robot(2.0, -0.2)  # Time, speed
 
@@ -165,9 +294,11 @@ class MainNode(Node):
                 search_table=False
         )
         if result != TaskResult.SUCCEEDED:
-            print(f"Going to table target: FAILED {result}, but continue")
-            # TODO
-            return
+            self.get_logger().error(f"Robot with table did not reached unloading point")
+
+            response.success = False  # Finished with errors
+            response.message = 'Robot with table did not reached unloading point! Go and help'
+            return response
         
         # Move down table
         self.table_down_pub.publish(String())
@@ -178,8 +309,7 @@ class MainNode(Node):
         # Turn robot as well
         result = self.rotate_robot(1.57*2)
         if not result:
-            print(f"Could not turn the robot")
-            # TODO
+            pass
             return
         
         #  Go to home point
@@ -190,49 +320,19 @@ class MainNode(Node):
                 search_table=False
         )
         if result != TaskResult.SUCCEEDED:
-            print(f"Going to table target: FAILED {result}, but continue")
-            # TODO
-            return
+            self.get_logger().info(f"Robot lost way his way to home!")
+
+            response.success = True  # Finished with errors
+            response.message = 'Robot lost way his way to home!'
+            return response
         
-        print("HOMEEE")
+        self.get_logger().info(f"Robot delivered table and got back home!")
 
+        response.success = True  # Finished with errors
+        response.message = 'Robot delivered table and got back home!'
+        return response
 
-
-        # Step 3 - Rotate robot
-        # result = self.rotate_robot(yaw=table_loc[3])
-        # if not result:
-        #     print(f"Step 3 - Rotate robot: FAILED")
-        #     # TODO process failed task
-        #     return
-        # self.create_rate(1/(5*abs(table_loc[3]))).sleep()
-        # print(f"Step 3 - Rotate robot: SUCCESS")
-        
-        # Step 4 - Lift elevator
-        # Step 4.1 - Change footprint
-
-
-        # Step 5 - Move table to back room
-
-
-        # Step 6 - Down elevator
-        # Step 6.1 - Change footprint
-
-
-        # Step 7 - Get out of table
-
-
-        # Step 7 - Go to home position  
-        # home_loc = home_position['home_1']
-        # result = self.go_to_pose(home_loc[0], home_loc[1], home_loc[2])
-        # if result != TaskResult.SUCCEEDED:
-        #     print(f"Step 7 - go to home position: FAILED {result}")
-        #     # TODO process failed task
-        #     return
-        # print("Step 7 - go to home positio: DONE")
-
-
-
-        
+       
     def get_pose_stamped(self,  x, y, yaw):
         pose = PoseStamped()
         pose.header.frame_id = 'map'
@@ -267,7 +367,7 @@ class MainNode(Node):
     def go_to_pose(self, x, y, yaw, search_table=False):
         pose = self.get_pose_stamped(x, y, yaw)
 
-        print(f'Received request for item picking at {pose.pose}.')
+        self.get_logger().info(f'Received request for item picking at {pose.pose.position}.')
         self.navigator.goToPose(pose)
 
         # Do something during our route
@@ -285,13 +385,13 @@ class MainNode(Node):
                         self.create_rate(1.0).sleep() # Sleep 2sec
 
                     if not self.is_table:
-                        print("Continue started task")
+                        self.get_logger().info("Continue started task")
                         self.navigator.goToPose(pose)
                     else:
-                        print("There is actually table")
+                        self.get_logger().info("There is actually table")
 
 
-            if feedback and i % 50 == 0:
+            if feedback and i % 100 == 0:
                 # print(
                 #     'Estimated time of arrival at '
                 #     + str(shelf_item_pose.pose)
@@ -352,5 +452,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
 
