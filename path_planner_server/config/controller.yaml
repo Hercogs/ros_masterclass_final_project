@@ -121,7 +121,7 @@ local_costmap:
         mark_threshold: 0
         observation_sources: scan
         scan:
-          topic: /turtlebot_5/scan
+          topic: /turtlebot_5/scan_filtered
           #sensor_frame: vikings_bot_1/lidar_link
           max_obstacle_height: 2.0
           clearing: True
