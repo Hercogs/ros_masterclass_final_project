@@ -1,0 +1,203 @@
+{
+  "configById": {
+    "3D!18i6zy7": {
+      "layers": {
+        "845139cb-26bc-40b3-8161-8ab60af4baf5": {
+          "visible": true,
+          "frameLocked": true,
+          "label": "Grid",
+          "instanceId": "845139cb-26bc-40b3-8161-8ab60af4baf5",
+          "layerId": "foxglove.Grid",
+          "size": 10,
+          "divisions": 10,
+          "lineWidth": 1,
+          "color": "#248eff",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "order": 1
+        }
+      },
+      "cameraState": {
+        "perspective": true,
+        "distance": 12.604988194475462,
+        "phi": 22.40855313304108,
+        "thetaOffset": -78.24666885634625,
+        "targetOffset": [
+          0.6599906685502251,
+          -0.16421391091816973,
+          1.7664571310851318e-16
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {
+        "syncCamera": false,
+        "enableStats": false,
+        "transforms": {
+          "showLabel": true,
+          "editable": false
+        }
+      },
+      "transforms": {
+        "frame:robot_evelator_base_link": {
+          "visible": true
+        },
+        "frame:odom": {
+          "visible": true
+        }
+      },
+      "topics": {
+        "/vikings_bot_1/lidar_scan": {
+          "pointSize": 4,
+          "flatColor": "#371ce3ff",
+          "visible": true,
+          "colorField": "intensity",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/map": {
+          "visible": true
+        },
+        "/initialpose": {
+          "visible": true
+        },
+        "/scan": {
+          "visible": true,
+          "colorField": "intensity",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/move_base_simple/goal": {
+          "visible": true
+        },
+        "/robot_description": {
+          "visible": true,
+          "displayMode": "collision"
+        },
+        "/amcl_pose": {
+          "visible": false
+        }
+      },
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {}
+    },
+    "Teleop!4j0us6s": {
+      "topic": "/turtlebot_5/cmd_vel",
+      "publishRate": 10,
+      "upButton": {
+        "field": "linear-x",
+        "value": 0.3
+      },
+      "downButton": {
+        "field": "linear-x",
+        "value": -0.3
+      },
+      "leftButton": {
+        "field": "angular-z",
+        "value": 1
+      },
+      "rightButton": {
+        "field": "angular-z",
+        "value": -1
+      }
+    },
+    "Publish!4ki6215": {
+      "buttonText": "Publish Elevator UP",
+      "buttonTooltip": "",
+      "advancedView": false,
+      "value": "{\n  \"data\": \"\"\n}",
+      "topicName": "/elevator_up",
+      "datatype": "std_msgs/msg/String"
+    },
+    "Publish!2b9p50p": {
+      "buttonText": "Publish Elevator DOWN",
+      "buttonTooltip": "",
+      "advancedView": false,
+      "value": "{\n  \"data\": \"\"\n}",
+      "topicName": "/elevator_down",
+      "datatype": "std_msgs/msg/String"
+    },
+    "RosOut!3svb6ke": {
+      "searchTerms": [],
+      "minLogLevel": 1,
+      "nameFilter": {
+        "foxglove_bridge": {
+          "visible": true
+        }
+      }
+    },
+    "CallService!13aw8cm": {
+      "requestPayload": "{\n    \"data\": false\n}",
+      "layout": "vertical",
+      "buttonTooltip": "",
+      "buttonColor": "#000000",
+      "serviceName": "/move_trash_table"
+    },
+    "CallService!1hpegbf": {
+      "requestPayload": "{}",
+      "layout": "vertical",
+      "serviceName": "/bring_trash_table"
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "first": {
+      "first": "3D!18i6zy7",
+      "second": {
+        "first": "Teleop!4j0us6s",
+        "second": {
+          "first": "Publish!4ki6215",
+          "second": "Publish!2b9p50p",
+          "direction": "column"
+        },
+        "direction": "column"
+      },
+      "direction": "row",
+      "splitPercentage": 71.12597547380155
+    },
+    "second": {
+      "first": "RosOut!3svb6ke",
+      "second": {
+        "first": "CallService!13aw8cm",
+        "second": "CallService!1hpegbf",
+        "direction": "row"
+      },
+      "direction": "row"
+    },
+    "direction": "column",
+    "splitPercentage": 73.93020771463532
+  }
+}

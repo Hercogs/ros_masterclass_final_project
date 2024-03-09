@@ -1,231 +1,69 @@
 # ros_masterclass_final_project
 
 ROS Masterclass 2023 - final project "Table picker robot"
-*ROS2 - Humble*
 
-*Important:* This project works only on the real robot for now. So, you should be connected to the real Table Picker robot offered by TheConstructSim.
+**Version:** *ROS2 - Humble*
+
+**Important:** This project works only on the real robot for now. So, you should be connected to the real Table Picker robot offered by TheConstructSim.
 
 
 ## Description
-Thei main goal of this repo is to show knowledge gained during the Masterclass and show ability to independently develop deployabe sofware on the real robot to solve real world tasks.
-There were following tasks given to solve for this project:
-    1. 
-    2. 
-    3.
-    4.
+Thei main goal of this repo is to show knowledge gained during the Masterclass and show ability
+to independently develop deployabe sofware on the real robot to solve real world tasks.
+There were following sub tasks given to solve for this project to prove knowledge:
+1. Setup Nav2 for the robot so it can localize itself and do path planning
+2. Create a program that detects the trash table based on the table's legs separation. 
+The robot must be able to find the shelf anywhere in Starbots.
+3. Based on the detected trash table, write a program that controls the robot to go underneath the table, 
+exactly in the middle, and lifts the elevator to pick the table up.
+4. Once the Nav2 goal is sent and the robot arrives to the back room, 
+write a program that commands the robot to drop the table by lowering 
+the elevator and reversing out of the trash table.
+5. Create a web application to control the whole process.
+6. Containerize your project so that it can easily be deployed in any machine. (Because of technical reasons
+that docker was not available in ROSject, this task was not completed.)
+7. Create complete documentation for your project and for the Masterclass Final Project Presentation.
 
-TODO: For more information and problems see presentation!
 
-Because of technical reasons it was not possible to use Docker on Rosject, so right now this repo does not offer fully dockerized image!
+TODO: For more information see presentation `???`!
 
 
 ## Installation
-
-
+```
 cd <path/to/your/ros_ws>
-git clone -b real https://github.com/foxglove/ros-foxglove-bridge.git src/ros_masterclass_final_project
+git clone -b real https://github.com/Hercogs/ros_masterclass_final_project.git src/ros_masterclass_final_project
 rosdep update
 rosdep install --ignore-src --default-yes --from-path src
+colcon build
+```
 
 
 ## Launching the project
-Launching this project consists of mutiple steps:
+Launching this project consists of multiple steps, so it is easier to debug:
 1. To launch ROS2 navigation stack for real robot use following command:
-    ``
-
-2. 
-
-
-
-# Dillinger
-## The Last Markdown Editor, Ever
-
-[![N|Solid](https://cldup.com/dTxpPi9lDf.thumb.png)](https://nodesource.com/products/nsolid)
-
-[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
-
-Dillinger is a cloud-enabled, mobile-ready, offline-storage compatible,
-AngularJS-powered HTML5 Markdown editor.
-
-- Type some Markdown on the left
-- See HTML in the right
-- ✨Magic ✨
-
-## Features
-
-- Import a HTML file and watch it magically convert to Markdown
-- Drag and drop images (requires your Dropbox account be linked)
-- Import and save files from GitHub, Dropbox, Google Drive and One Drive
-- Drag and drop markdown and HTML files into Dillinger
-- Export documents as Markdown, HTML and PDF
-
-Markdown is a lightweight markup language based on the formatting conventions
-that people naturally use in email.
-As [John Gruber] writes on the [Markdown site][df1]
-
-> The overriding design goal for Markdown's
-> formatting syntax is to make it as readable
-> as possible. The idea is that a
-> Markdown-formatted document should be
-> publishable as-is, as plain text, without
-> looking like it's been marked up with tags
-> or formatting instructions.
-
-This text you see here is *actually- written in Markdown! To get a feel
-for Markdown's syntax, type some text into the left window and
-watch the results in the right.
-
-## Tech
-
-Dillinger uses a number of open source projects to work properly:
-
-- [AngularJS] - HTML enhanced for web apps!
-- [Ace Editor] - awesome web-based text editor
-- [markdown-it] - Markdown parser done right. Fast and easy to extend.
-- [Twitter Bootstrap] - great UI boilerplate for modern web apps
-- [node.js] - evented I/O for the backend
-- [Express] - fast node.js network app framework [@tjholowaychuk]
-- [Gulp] - the streaming build system
-- [Breakdance](https://breakdance.github.io/breakdance/) - HTML
-to Markdown converter
-- [jQuery] - duh
-
-And of course Dillinger itself is open source with a [public repository][dill]
- on GitHub.
-
-## Installation
-
-Dillinger requires [Node.js](https://nodejs.org/) v10+ to run.
-
-Install the dependencies and devDependencies and start the server.
-
-sh
-cd dillinger
-npm i
-node app
-
-
-For production environments...
-
-sh
-npm install --production
-NODE_ENV=production node app
-
-
-## Plugins
-
-Dillinger is currently extended with the following plugins.
-Instructions on how to use them in your own application are linked below.
-
-| Plugin | README |
-| ------ | ------ |
-| Dropbox | [plugins/dropbox/README.md][PlDb] |
-| GitHub | [plugins/github/README.md][PlGh] |
-| Google Drive | [plugins/googledrive/README.md][PlGd] |
-| OneDrive | [plugins/onedrive/README.md][PlOd] |
-| Medium | [plugins/medium/README.md][PlMe] |
-| Google Analytics | [plugins/googleanalytics/README.md][PlGa] |
-
-## Development
-
-Want to contribute? Great!
-
-Dillinger uses Gulp + Webpack for fast developing.
-Make a change in your file and instantaneously see your updates!
-
-Open your favorite Terminal and run these commands.
-
-First Tab:
-
-sh
-node app
-
-
-Second Tab:
-
-sh
-gulp watch
-
-
-(optional) Third:
-
-sh
-karma test
-
-
-#### Building for source
-
-For production release:
-
-sh
-gulp build --prod
-
-
-Generating pre-built zip archives for distribution:
-
-sh
-gulp build dist --prod
-
-
-## Docker
-
-Dillinger is very easy to install and deploy in a Docker container.
-
-By default, the Docker will expose port 8080, so change this within the
-Dockerfile if necessary. When ready, simply use the Dockerfile to
-build the image.
-
-sh
-cd dillinger
-docker build -t <youruser>/dillinger:${package.json.version} .
-
-
-This will create the dillinger image and pull in the necessary dependencies.
-Be sure to swap out ${package.json.version} with the actual
-version of Dillinger.
-
-Once done, run the Docker image and map the port to whatever you wish on
-your host. In this example, we simply map port 8000 of the host to
-port 8080 of the Docker (or whatever port was exposed in the Dockerfile):
-
-sh
-docker run -d -p 8000:8080 --restart=always --cap-add=SYS_ADMIN --name=dillinger <youruser>/dillinger:${package.json.version}
-
-
-> Note: --capt-add=SYS-ADMIN is required for PDF rendering.
-
-Verify the deployment by navigating to your server address in
-your preferred browser.
-
-sh
-127.0.0.1:8000
-
-
-## License
-
-MIT
-
-*Free Software, Hell Yeah!*
-
-[//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
-
-   [dill]: <https://github.com/joemccann/dillinger>
-   [git-repo-url]: <https://github.com/joemccann/dillinger.git>
-   [john gruber]: <http://daringfireball.net>
-   [df1]: <http://daringfireball.net/projects/markdown/>
-   [markdown-it]: <https://github.com/markdown-it/markdown-it>
-   [Ace Editor]: <http://ace.ajax.org>
-   [node.js]: <http://nodejs.org>
-   [Twitter Bootstrap]: <http://twitter.github.com/bootstrap/>
-   [jQuery]: <http://jquery.com>
-   [@tjholowaychuk]: <http://twitter.com/tjholowaychuk>
-   [express]: <http://expressjs.com>
-   [AngularJS]: <http://angularjs.org>
-   [Gulp]: <http://gulpjs.com>
-
-   [PlDb]: <https://github.com/joemccann/dillinger/tree/master/plugins/dropbox/README.md>
-   [PlGh]: <https://github.com/joemccann/dillinger/tree/master/plugins/github/README.md>
-   [PlGd]: <https://github.com/joemccann/dillinger/tree/master/plugins/googledrive/README.md>
-   [PlOd]: <https://github.com/joemccann/dillinger/tree/master/plugins/onedrive/README.md>
-   [PlMe]: <https://github.com/joemccann/dillinger/tree/master/plugins/medium/README.md>
-   [PlGa]: <https://github.com/RahulHP/dillinger/blob/master/plugins/googleanalytics/README.md>
+    `source src/ros_masterclass_final_project/scripts/start_path_planning.bash`
+Initialize robot pose with *Rviz*, which should open automatically.
+2. To launch table detection process use following command:
+    `source src/ros_masterclass_final_project/scripts/start_table_detection.bash`
+3. To launch web socket for webpage, use following command: 
+   `source src/ros_masterclass_final_project/scripts/foxglove_bridge.bash`
+   Execute: `rosbridge_address` to get websocket address, which later should be used to connect in webpage.
+4. To launch webpage, execute: 
+   `docker run --rm -p "8080:8080" -v src/ros_masterclass_final_project/foxglove-layout.json:/foxglove/default-layout.json ghcr.io/foxglove/studio:latest`
+   Webpage will be accessible in your browser at [localhost:8080](http://localhost:8080/). Make connection using `rosbridge_address`
+   from step 3. More information, how to use it: [foxglove](https://foxglove.dev/).
+
+
+### Webpage interface
+Webpage should look like below:
+
+![](images/foxglove_web_edit.png)
+
+1. Setting panel
+2. 3D space - for map. lidar, images e.c. data
+3. Teleop panel, which allows to move robot
+4. Topic publisher - lifts elevator
+5. Topic publisher - move down elevator
+6. Log panel - contains logs from ROS
+7. Service caller - move table to the back room
+8. Service caller - bring back table from back room

@@ -8,11 +8,6 @@ def generate_launch_description():
     package_name = "robot_firmware"
 
 
-    # RVIZ configuration file
-    rviz_file = "rvis.rviz"
-    rviz_config_dir = os.path.join(get_package_share_directory(package_name), "rviz", rviz_file)
-    rviz_config_dir = "/home/user/ros2_ws/src/rvis.rviz"
-
     return LaunchDescription([
         
         Node(
@@ -24,15 +19,12 @@ def generate_launch_description():
         ),
 
         Node(
-            package="rviz2",
-            executable="rviz2",
-            output="screen",
-            parameters=[{
-                "use_sim_time": True,
-            }],
-            arguments=[
-                "-d ", rviz_config_dir
-            ]
-        )
+            package=package_name, 
+            executable='main_node', 
+            name='main_node',
+            output='screen',
+            parameters=[{'use_sim_time': True}],
+        ),
+
 
     ]) 
