@@ -15,7 +15,7 @@ def generate_launch_description():
             executable='table_detection', 
             name='table_detection',
             output='screen',
-            parameters=[{'use_sim_time': True}],
+            parameters=[{'use_sim_time': False}],
         ),
 
         Node(
@@ -23,7 +23,7 @@ def generate_launch_description():
             executable='main_node', 
             name='main_node',
             output='screen',
-            parameters=[{'use_sim_time': True}],
+            parameters=[{'use_sim_time': False}],
         ),
 
 

@@ -139,7 +139,7 @@ class MainNode(Node):
             response.message = 'Could not find way to the table'
             return response
         
-        result = self.go_to_pose(-1.40, 0.1, 1.57, search_table=True)
+        result = self.go_to_pose(-1.60, 0.1, 1.57, search_table=True)
         if not self.is_table:
             #  Go to home point
             result = self.go_to_pose(
