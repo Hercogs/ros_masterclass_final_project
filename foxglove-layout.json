@@ -27,13 +27,13 @@
       },
       "cameraState": {
         "perspective": true,
-        "distance": 12.604988194475462,
-        "phi": 22.40855313304108,
-        "thetaOffset": -78.24666885634625,
+        "distance": 9.265824603180675,
+        "phi": 5.543591308838359,
+        "thetaOffset": -89.59769086270326,
         "targetOffset": [
-          0.6599906685502251,
-          -0.16421391091816973,
-          1.7664571310851318e-16
+          0.5582839012652537,
+          0.8814247284380579,
+          1.204605992535067e-16
         ],
         "target": [
           0,
@@ -65,6 +65,42 @@
         },
         "frame:odom": {
           "visible": true
+        },
+        "frame:turtlebot_5_base_footprint": {
+          "visible": false
+        },
+        "frame:turtlebot_5_cliff_sensor_left_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_cliff_sensor_right_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_gyro_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_plate_bottom_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_plate_top_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_plate_middle_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_caster_front_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_caster_back_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_cliff_sensor_front_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_laser_link": {
+          "visible": false
+        },
+        "frame:turtlebot_5_base_link": {
+          "visible": false
         }
       },
       "topics": {
@@ -96,7 +132,34 @@
           "displayMode": "collision"
         },
         "/amcl_pose": {
+          "visible": true
+        },
+        "/local_costmap/costmap": {
           "visible": false
+        },
+        "/global_costmap/published_footprint": {
+          "visible": true
+        },
+        "/plan": {
+          "visible": false
+        },
+        "/cost_cloud": {
+          "visible": false
+        },
+        "/global_costmap/costmap": {
+          "visible": true
+        },
+        "/turtlebot_5/scan": {
+          "visible": true,
+          "colorField": "intensity",
+          "colorMode": "flat",
+          "colorMap": "turbo",
+          "flatColor": "#8ce917ff",
+          "pointSize": 4
+        },
+        "/received_global_plan": {
+          "visible": true,
+          "lineWidth": 0.095
         }
       },
       "publish": {

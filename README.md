@@ -25,7 +25,7 @@ that docker was not available in ROSject, this task was not completed.)
 7. Create complete documentation for your project and for the Masterclass Final Project Presentation.
 
 
-TODO: For more information see presentation `???`!
+TODO: For more information see presentation in `ros_masterclass_final_project.txt` file!
 
 
 ## Installation
